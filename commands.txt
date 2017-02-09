@@ -1,0 +1,2 @@
+gcc -I/usr/local/opencal-1.0/include -L /usr/local/opencal-1.0/lib -lGL -lGLU -lglut -lm -lopencal  -g  *.c *.h
+
