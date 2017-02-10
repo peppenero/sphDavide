@@ -7,7 +7,9 @@
  *      Author: giuseppe
  */
 
-#include <OpenCAL/calCommon.h>
+extern "C"{
+    #include <OpenCAL/calCommon.h>
+}
 
 #ifndef PARSER_H_
 #define PARSER_H_

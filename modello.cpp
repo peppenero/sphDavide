@@ -1,6 +1,5 @@
-#include "prova.h"
+#include "modello.h"
 #include "parser.h"
-#include "vecutils.h"
 #include "sph.h"
 
 
@@ -207,6 +206,9 @@ void partilu()
 		Q.vx[i]    = calAddSubstate3Dr(u_modellu);
 		Q.vy[i]    = calAddSubstate3Dr(u_modellu);
 		Q.vz[i]    = calAddSubstate3Dr(u_modellu);
+        Q.nx[i]    = calAddSubstate3Dr(u_modellu);
+		Q.ny[i]    = calAddSubstate3Dr(u_modellu);
+		Q.nz[i]    = calAddSubstate3Dr(u_modellu);
 		Q.density[i] = calAddSubstate3Dr(u_modellu);
 		Q.pressure[i] = calAddSubstate3Dr(u_modellu);
 		Q.imove[i] = calAddSubstate3Di(u_modellu);
@@ -218,6 +220,9 @@ void partilu()
 		calInitSubstate3Dr(u_modellu,Q.vx[i],   0);
 		calInitSubstate3Dr(u_modellu,Q.vy[i],   0);
 		calInitSubstate3Dr(u_modellu,Q.vz[i],   0);
+        calInitSubstate3Dr(u_modellu,Q.nx[i],   0);
+		calInitSubstate3Dr(u_modellu,Q.ny[i],   0);
+		calInitSubstate3Dr(u_modellu,Q.nz[i],   0);
 		calInitSubstate3Dr(u_modellu,Q.density[i],   0);
 		calInitSubstate3Dr(u_modellu,Q.pressure[i],   0);
 		calInitSubstate3Di(u_modellu,Q.imove[i],PARTICLE_ABSENT);

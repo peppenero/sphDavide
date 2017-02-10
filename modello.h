@@ -1,11 +1,14 @@
 #ifndef PROVA_H_
 #define PROVA_H_
 
+extern "C" {
 #include <OpenCAL/cal3D.h>
 #include <OpenCAL/cal3DRun.h>
 #include <OpenCAL/cal3DIO.h>
 #include <OpenCAL/cal3DUnsafe.h>
 #include <OpenCAL/calCommon.h>
+}
+
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <math.h>
@@ -49,6 +52,11 @@ struct Substates
 	struct CALSubstate3Dr *vx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
 	struct CALSubstate3Dr *vy[MAX_NUMBER_OF_PARTICLES_PER_CELL];
 	struct CALSubstate3Dr *vz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    
+    struct CALSubstate3Dr *nx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+	struct CALSubstate3Dr *ny[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+	struct CALSubstate3Dr *nz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    
 	struct CALSubstate3Dr *density[MAX_NUMBER_OF_PARTICLES_PER_CELL];
 	struct CALSubstate3Dr *pressure[MAX_NUMBER_OF_PARTICLES_PER_CELL];
 	struct CALSubstate3Di *imove[MAX_NUMBER_OF_PARTICLES_PER_CELL];

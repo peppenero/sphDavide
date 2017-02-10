@@ -1,7 +1,4 @@
-#include "prova.h"
-#include "parser.h"
-#include <OpenCAL/cal3D.h>
-#include <OpenCAL/cal3DRun.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef __APPLE__
@@ -11,7 +8,13 @@
 #endif
 #include <time.h>
 
+#include "modello.h"
+#include "parser.h"
 
+extern "C"{
+#include <OpenCAL/cal3D.h>
+#include <OpenCAL/cal3DRun.h>
+}
 
 struct ModelView{
 	GLfloat x_rot;
