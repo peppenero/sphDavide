@@ -6,14 +6,23 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define DISTANCE    (0.001)
-#define MASS        (0)
 #define STIFFNESS   (0)
-#define RADIUS      (0)
 #define RESTDENSITY (0)
 #define VISCOSITY   (0)
+
 #define SURFACE_THRESHOLD (0)
 #define SURFACE_TENSION (0)
+
+#define WALL_DAMPING (0)
+#define WALL_K (0)
+
+#define DISTANCE    (0.001)
+#define MASS        (0)
+
+#define RADIUS      (0)
+
+
+
 
 CALreal WPoly6(const CALreal r2, const CALreal h) {
     const CALreal coefficient = 315.0/(64.0*M_PI*pow(h,9));
@@ -250,8 +259,54 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
             //advance(i,j,k,slot,acc);
         
     }
+
 }
 
+VEC3 computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int n){
+
+    	VEC3 _a_extern={0,0,0};
+
+    	const CALreal px = calGet3Dr(ca,Q.px[n],i,j,k);
+    	const CALreal py = calGet3Dr(ca,Q.py[n],i,j,k);
+    	const CALreal pz = calGet3Dr(ca,Q.pz[n],i,j,k);
+    	VEC3 p1= {px,py,pz};
+
+    	const CALreal vx = calGet3Dr(ca,Q.vx[n],i,j,k);
+		const CALreal vy = calGet3Dr(ca,Q.vy[n],i,j,k);
+		const CALreal vz = calGet3Dr(ca,Q.vz[n],i,j,k);
+		VEC3 v1= {vx,vy,vz};
+
+
+    	for(int p=0;p<MAX_NUMBER_OF_PARTICLES_PER_CELL;p++){
+    		if(calGet3Di(ca,Q.imove[p],i,j,k)==PARTICLE_EDGE){
+    			const CALreal npx = calGet3Dr(ca,Q.px[p],i,j,k);
+				const CALreal npy = calGet3Dr(ca,Q.py[p],i,j,k);
+				const CALreal npz = calGet3Dr(ca,Q.pz[p],i,j,k);
+				VEC3 norm= {0,0,0};
+    			VEC3 p2= {npx,npy,npz};
+    			VEC3 diff;
+    			diff(p1,p2,diff);
+    			VEC3 dot;
+    			scale(diff,norm,dot);
+    			CALreal d = dot+RADIUS;
+
+    			if(d>0){
+    				VEC3 resMult;
+    				mult(norm,WALL_K*d,resMult);
+    				add(_a_extern,resMult,_a_extern);
+
+    				VEC3 scaleMult;
+    				scale(v1,norm,scaleMult);
+
+
+    				add(_a_extern,d,_a_extern);
+    			}
+    		}
+    	}
+
+
+    	return _a_extern;
+    }
 
 
 
