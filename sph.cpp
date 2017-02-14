@@ -23,7 +23,7 @@ constexpr const static  double WALL_K = 10000.0; // wall spring constant
 
 
 //aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =0.000045; // particle radius
+constexpr const static  double RADIUS =1; // particle radius
 constexpr const static  double MASS =0.000026254; // particle mass
 constexpr const static  double DT =0.000009; // time simulation quantum
 
@@ -76,6 +76,7 @@ inline CALreal WviscosityLaplacian(CALreal radiusSquared, const CALreal h) {
 
 bool isNeigh(VEC3r p1, VEC3r p2) {
     double d = glm::distance(p1,p2);
+    //printf("DISTANZA %f",d);
     if(d<=RADIUS)
         return true;
     return false;
@@ -84,7 +85,7 @@ bool isNeigh(VEC3r p1, VEC3r p2) {
 }
 
 void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
-    for(int slot; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
+    for(int slot=0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
         CALreal density = 0;
 
 
@@ -95,7 +96,7 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
         VEC3r p1 = VEC3r(px,py,pz);
 
         for (int n=0; n<ca->sizeof_X; n++) {
-            for(int slot1; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+            for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
 
                 const CALreal npx = calGetX3Dr(ca,Q.px[slot1],i,j,k,n);
                 const CALreal npy = calGetX3Dr(ca,Q.py[slot1],i,j,k,n);
@@ -152,7 +153,8 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
         if(ncestiFluiduNtraStuSlot(ca,i,j,k,slot)) {//solo se sono di fluido
 
             CALreal pdensity = calGet3Dr(ca,Q.density[slot],i,j,k);
-            CALreal ppressure = calGet3Dr(ca,Q.pressure[slot],i,j,k);
+            CALreal ppressure = 2;
+                    //calGet3Dr(ca,Q.pressure[slot],i,j,k);
 
             VEC3r f_gravity = G * pdensity;
             VEC3r f_pressure=VEC3r(0,0,0);
@@ -178,14 +180,16 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
             int cn=0;
             for (int n=0; n<ca->sizeof_X; n++) {
-                for(int slot1; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+                for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
 
                     VEC3r p2 = getPositionX(ca,i,j,k,slot1,n);
                     VEC3r v2 = getVelocityX(ca,i,j,k,slot1,n);
                     CALreal ndensity = calGetX3Dr(ca,Q.density[slot1],i,j,k,n);
-                    CALreal npressure = calGetX3Dr(ca,Q.pressure[slot1],i,j,k,n);
+                    CALreal npressure = 2;
+                            //calGetX3Dr(ca,Q.pressure[slot1],i,j,k,n);
 
                     if(isNeigh(p1,p2)) {
+                        printf("ENTROOOOOOOOOOOOO");
                         cn++;
                         VEC3r diff = p1 - p2;
                         double dist_2 = glm::dot(diff,diff);
@@ -196,7 +200,8 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
                         VEC3r spikyGradient;
                         WspikyGradient(diff, dist_2, spikyGradient, RADIUS);
 
-                        if(!(n==0 && slot1==slot)) {
+                        if(!(n==0 && slot1==slot)){
+                            printf("STICCHIARELLO");
                             f_pressure +=(  ppressure/pow(pdensity,2)+
                                             npressure/pow(ndensity,2)
                                          )*spikyGradient;
@@ -236,11 +241,11 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
             VEC3r acc = (f_pressure  +f_viscosity + f_surface + f_gravity ) / pdensity;
 
-            printf("%f\n",f_pressure[0]);
-            printf("%f\n",f_viscosity[0]);
-            printf("%f\n",f_surface[0]);
-            printf("%f\n",f_gravity[0]);
-            printf("%f\n",pdensity);
+            printf("Pressure: %f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
+            printf("Viscvosity:  %f,%f,%f\n",f_viscosity[0],f_viscosity[1],f_viscosity[2]);
+            printf("Surface:  %f,%f,%f\n",f_surface[0],f_surface[1],f_surface[2]);
+            printf("Gravity:  %f,%f,%f\n",f_gravity[0],f_gravity[1],f_gravity[2]);
+            printf("Density: %f\n",pdensity);
 
 
 
