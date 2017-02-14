@@ -4,7 +4,7 @@
 
 
 #ifndef M_PI
-    #define M_PI 3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #endif
 
 constexpr const static  double STIFFNESS  = 3.0; // Nm/kg is gas constant of water vapor
@@ -23,9 +23,9 @@ constexpr const static  double WALL_K = 10000.0; // wall spring constant
 
 
 //aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =1.05; // particle radius
-constexpr const static  double MASS =100; // particle mass
-constexpr const static  double DT =0.009; // time simulation quantum
+constexpr const static  double RADIUS =0.000045; // particle radius
+constexpr const static  double MASS =0.000026254; // particle mass
+constexpr const static  double DT =0.000009; // time simulation quantum
 
 
 
@@ -74,10 +74,12 @@ inline CALreal WviscosityLaplacian(CALreal radiusSquared, const CALreal h) {
 
 
 
-bool isNeigh(VEC3r v1, VEC3r v2) {
-    VEC3r d = v1-v2;
-    
-    return true;
+bool isNeigh(VEC3r p1, VEC3r p2) {
+    double d = glm::distance(p1,p2);
+    if(d<=RADIUS)
+        return true;
+    return false;
+
     //return magnitude(d)<DISTANCE;
 }
 
@@ -90,7 +92,7 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
         const CALreal px = calGet3Dr(ca,Q.px[slot],i,j,k);
         const CALreal py = calGet3Dr(ca,Q.py[slot],i,j,k);
         const CALreal pz = calGet3Dr(ca,Q.pz[slot],i,j,k);
-        VEC3r p1 = VEC3r(px,py,pz); 
+        VEC3r p1 = VEC3r(px,py,pz);
 
         for (int n=0; n<ca->sizeof_X; n++) {
             for(int slot1; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
@@ -98,7 +100,7 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
                 const CALreal npx = calGetX3Dr(ca,Q.px[slot1],i,j,k,n);
                 const CALreal npy = calGetX3Dr(ca,Q.py[slot1],i,j,k,n);
                 const CALreal npz = calGetX3Dr(ca,Q.pz[slot1],i,j,k,n);
-                VEC3r p2= VEC3r(npx,npy,npz); 
+                VEC3r p2= VEC3r(npx,npy,npz);
 
                 //v1 and v2 does not refer to the very same particle
                 if(!(n==0 && slot1==slot) && isNeigh(p1,p2)) {
@@ -120,38 +122,38 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
 }
 
 
-inline VEC3r getPositionX(struct CALModel3D* ca , const int i, const int j, const int k, const int slot, const int n){
+inline VEC3r getPositionX(struct CALModel3D* ca , const int i, const int j, const int k, const int slot, const int n) {
     return VEC3r(calGetX3Dr(ca,Q.px[slot],i,j,k,n),calGetX3Dr(ca,Q.py[slot],i,j,k,n),calGetX3Dr(ca,Q.pz[slot],i,j,k,n));
 }
 
-inline  VEC3r getVelocityX(struct CALModel3D * ca , const int i, const int j, const int k, const int slot, const int n){
+inline  VEC3r getVelocityX(struct CALModel3D * ca , const int i, const int j, const int k, const int slot, const int n) {
     return VEC3r(calGetX3Dr(ca,Q.vx[slot],i,j,k,n),calGetX3Dr(ca,Q.vy[slot],i,j,k,n),calGetX3Dr(ca,Q.vz[slot],i,j,k,n));
 }
 
 
-inline VEC3r getPosition(struct CALModel3D* ca , const int i, const int j, const int k, const int slot){
+inline VEC3r getPosition(struct CALModel3D* ca , const int i, const int j, const int k, const int slot) {
     return VEC3r(calGet3Dr(ca,Q.px[slot],i,j,k),calGet3Dr(ca,Q.py[slot],i,j,k),calGet3Dr(ca,Q.pz[slot],i,j,k));
 }
 
-inline  VEC3r getVelocity(struct CALModel3D * ca , const int i, const int j, const int k, const int slot){
+inline  VEC3r getVelocity(struct CALModel3D * ca , const int i, const int j, const int k, const int slot) {
     return VEC3r(calGet3Dr(ca,Q.vx[slot],i,j,k),calGet3Dr(ca,Q.vy[slot],i,j,k),calGet3Dr(ca,Q.vz[slot],i,j,k));
 }
 
-inline  VEC3r getNormal(struct CALModel3D * ca , const int i, const int j, const int k, const int slot){
+inline  VEC3r getNormal(struct CALModel3D * ca , const int i, const int j, const int k, const int slot) {
     return VEC3r(calGet3Dr(ca,Q.nx[slot],i,j,k),calGet3Dr(ca,Q.ny[slot],i,j,k),calGet3Dr(ca,Q.nz[slot],i,j,k));
 }
 
-VEC3r G = VEC3r(0,0,-9.81);
+VEC3r G = VEC3r(0,0,9.81);
 
 void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
     for(int slot=0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
-		//---------------Messo io l'if------------------		
-		if(ncestiFluiduNtraStuSlot){
+        //---------------Messo io l'if------------------
+        if(ncestiFluiduNtraStuSlot(ca,i,j,k,slot)) {//solo se sono di fluido
 
             CALreal pdensity = calGet3Dr(ca,Q.density[slot],i,j,k);
             CALreal ppressure = calGet3Dr(ca,Q.pressure[slot],i,j,k);
-            
+
             VEC3r f_gravity = G * pdensity;
             VEC3r f_pressure=VEC3r(0,0,0);
             VEC3r f_viscosity=VEC3r(0,0,0);
@@ -161,63 +163,63 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
             double colorFieldLaplacian;
 
 
-        //pos particle
-        VEC3r p1 = getPosition(ca,i,j,k,slot);
-        
+            //pos particle
+            VEC3r p1 = getPosition(ca,i,j,k,slot);
 
 
-        //vel particle
-        
-        VEC3r v1 = getVelocity(ca,i,j,k,slot);
-    
-		
-		//norm particle
-		VEC3r n1 = getNormal(ca,i,j,k,slot);
 
- int cn=0;
-        for (int n=0; n<ca->sizeof_X; n++) {
-            for(int slot1; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+            //vel particle
 
-            VEC3r p2 = getPositionX(ca,i,j,k,slot1,n);
-            VEC3r v2 = getVelocityX(ca,i,j,k,slot1,n);
-            CALreal ndensity = calGetX3Dr(ca,Q.density[slot1],i,j,k,n);
-            CALreal npressure = calGetX3Dr(ca,Q.pressure[slot1],i,j,k,n);
-           
-               if(isNeigh(p1,p2)){
-                    cn++;
-                    VEC3r diff = p1 - p2;
-                    double dist_2 = glm::dot(diff,diff);
+            VEC3r v1 = getVelocity(ca,i,j,k,slot);
 
-                    VEC3r poly6Gradient;
-                    Wpoly6Gradient(diff, dist_2, poly6Gradient,RADIUS);
 
-                    VEC3r spikyGradient;
-                    WspikyGradient(diff, dist_2, spikyGradient, RADIUS);
+            //norm particle
+            VEC3r n1 = getNormal(ca,i,j,k,slot);
 
-                    if(!(n==0 && slot1==slot)){
-                        f_pressure +=(  ppressure/pow(pdensity,2)+
-                                        npressure/pow(ndensity,2)
-                                        )*spikyGradient;
+            int cn=0;
+            for (int n=0; n<ca->sizeof_X; n++) {
+                for(int slot1; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
 
-                        f_viscosity += ( v2 -v1)*
+                    VEC3r p2 = getPositionX(ca,i,j,k,slot1,n);
+                    VEC3r v2 = getVelocityX(ca,i,j,k,slot1,n);
+                    CALreal ndensity = calGetX3Dr(ca,Q.density[slot1],i,j,k,n);
+                    CALreal npressure = calGetX3Dr(ca,Q.pressure[slot1],i,j,k,n);
+
+                    if(isNeigh(p1,p2)) {
+                        cn++;
+                        VEC3r diff = p1 - p2;
+                        double dist_2 = glm::dot(diff,diff);
+
+                        VEC3r poly6Gradient;
+                        Wpoly6Gradient(diff, dist_2, poly6Gradient,RADIUS);
+
+                        VEC3r spikyGradient;
+                        WspikyGradient(diff, dist_2, spikyGradient, RADIUS);
+
+                        if(!(n==0 && slot1==slot)) {
+                            f_pressure +=(  ppressure/pow(pdensity,2)+
+                                            npressure/pow(ndensity,2)
+                                         )*spikyGradient;
+
+                            f_viscosity += ( v2 -v1)*
                                            WviscosityLaplacian(dist_2,RADIUS) / ndensity;
+                        }
+
+                        colorFieldNormal += poly6Gradient / ndensity;
+                        colorFieldLaplacian += Wpoly6Laplacian(dist_2,RADIUS) / ndensity;
+
                     }
 
-                    colorFieldNormal += poly6Gradient / ndensity;
-                    colorFieldLaplacian += Wpoly6Laplacian(dist_2,RADIUS) / ndensity;
-
                 }
-
-                }
-    }
+            }
 
             f_pressure *= -MASS* pdensity;
             f_viscosity *=  VISCOSITY * MASS;
 
             colorFieldNormal *= MASS;
             //!!!!!!p->normal = -1.0 * colorFieldNormal; AGGIUSTA QUESTO---------------------------------------------------------------
-			n1 = -1.0 * colorFieldNormal;			            
-			colorFieldLaplacian *=MASS;
+            n1 = -1.0 * colorFieldNormal;
+            colorFieldLaplacian *=MASS;
 
             // surface tension force
             double colorFieldNormalMagnitude = colorFieldNormal.length(); //check that this is actually the magnitude of the vector
@@ -232,16 +234,22 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
                 calSet3Db(ca,Q.flag[slot],i,j,k,0);
             }
 
-           VEC3r acc = (f_pressure  +f_viscosity + f_surface + f_gravity ) / pdensity;
+            VEC3r acc = (f_pressure  +f_viscosity + f_surface + f_gravity ) / pdensity;
 
-            
+            printf("%f\n",f_pressure[0]);
+            printf("%f\n",f_viscosity[0]);
+            printf("%f\n",f_surface[0]);
+            printf("%f\n",f_gravity[0]);
+            printf("%f\n",pdensity);
+
+
 
             /**add external forces, collision, user interaction, moving rigid bodys etc.**/
             a_external = computeExternalForces(ca,i,j,k,slot);
             acc+= a_external;
-            acc = VEC3r(0.0,0.0,-0.1);
+            //acc = VEC3r(0.0,0.0,-0.1);
             advance(ca,i,j,k,slot,acc);
-     }   
+        }
     }
 
 }
@@ -259,55 +267,57 @@ T ipow(T base, unsigned int exp) {
     return result;
 }
 
-void advance(struct CALModel3D* ca , const int i, const int j, const int k , const int slot, const VEC3r& acc){
-            
-            VEC3r p1,v1;
-            p1 = getPosition(ca,i,j,k,slot);
-            v1 = getVelocity(ca,i,j,k,slot);
-            VEC3r newPosition = p1 + v1*DT + acc * ipow<double>(DT,2);
-            VEC3r newVelocity = (newPosition - p1) /DT;
-            printf("%f\n",p1[0]);
-            printf("%f\n",newPosition[0]);
+void advance(struct CALModel3D* ca , const int i, const int j, const int k , const int slot, const VEC3r& acc) {
+
+    VEC3r p1,v1;
+    p1 = getPosition(ca,i,j,k,slot);
+    v1 = getVelocity(ca,i,j,k,slot);
+    VEC3r newPosition = p1 + v1*DT + acc * ipow<double>(DT,2);
+    VEC3r newVelocity = (newPosition - p1) /DT;
+    printf("Vecchia: %f,%f,%f\n",p1[0],p1[1],p1[2]);
+    printf("Nuova: %f,%f,%f\n",newPosition[0],newPosition[1],newPosition[2]);
 
 //set  new position
-            calSet3Dr(ca,Q.px[slot],i,j,k,newPosition[0]);
-            calSet3Dr(ca,Q.py[slot],i,j,k,newPosition[1]);
-            calSet3Dr(ca,Q.pz[slot],i,j,k,newPosition[2]);
-//set  new velocity            
-            calSet3Dr(ca,Q.vx[slot],i,j,k,newVelocity[0]);
-            calSet3Dr(ca,Q.vy[slot],i,j,k,newVelocity[1]);
-            calSet3Dr(ca,Q.vz[slot],i,j,k,newVelocity[2]);
+    calSet3Dr(ca,Q.px[slot],i,j,k,newPosition[0]);
+    calSet3Dr(ca,Q.py[slot],i,j,k,newPosition[1]);
+    calSet3Dr(ca,Q.pz[slot],i,j,k,newPosition[2]);
+//set  new velocity
+    calSet3Dr(ca,Q.vx[slot],i,j,k,newVelocity[0]);
+    calSet3Dr(ca,Q.vy[slot],i,j,k,newVelocity[1]);
+    calSet3Dr(ca,Q.vz[slot],i,j,k,newVelocity[2]);
 
 
 }
 
 //TODO!--------------------------------------------
-bool hitWall(const VEC3r& p1,const VEC3r& p2){
+bool hitWall(const VEC3r& p1,const VEC3r& p2) {
+    if(glm::distance(p1,p2)<=0.02)
+        return true;
     return false;
 }
 
 
-VEC3r computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int slot){
+VEC3r computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int slot) {
 
     VEC3r _a_extern(0,0,0);
     VEC3r p1 = getPosition(ca,i,j,k,slot);
-    
+
     VEC3r v1 = getVelocity(ca,i,j,k,slot);
-    
-     for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
-         VEC3r p2 = getPosition(ca,i,j,k,slot1);
-         CALint isWall =  calGet3Di(ca,Q.imove[slot1],i,j,k);
-         VEC3r n2 =  getNormal(ca,i,j,k,slot);
-         if( isWall==-3 && slot!=slot1 && hitWall(p1,p2)){
-              double d = glm::dot((p2 - p1),n2) + RADIUS;
-            if(d > 0){
+
+    for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+        VEC3r p2 = getPosition(ca,i,j,k,slot1);
+        CALint isWall =  calGet3Di(ca,Q.imove[slot1],i,j,k);
+        VEC3r n2 =  getNormal(ca,i,j,k,slot);
+        if( isWall==-3 && slot!=slot1 && hitWall(p1,p2)) {
+            double d = glm::dot((p2 - p1),n2) + RADIUS;
+            if(d > 0) {
                 _a_extern +=  WALL_K * n2 * d;
                 _a_extern +=  WALL_DAMPING * glm::dot(v1,n2) * n2;
             }
-         }
-         
-     }
-     return _a_extern;
+        }
+
+    }
+    return _a_extern;
 }
 
 

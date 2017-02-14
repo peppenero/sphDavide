@@ -12,6 +12,7 @@ void avanza(struct CALModel3D* ca, int i, int j, int k){
         VEC3r acc(0,0,0);
 	for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
 		if(ncestiFluiduNtraStuSlot(ca,i,j,k,n)){
+                        calcolaDensita(ca,i,j,k);
                         computePressureAcceleration(ca,i,j,k);
 		}
 	}
@@ -152,7 +153,7 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
 
 //Funzione che date le posizione reali della particella le converte in indici
 //della matrice dell'automa cellulare ed imposta i valori iniziali.
-void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z,const CALreal nx, const CALreal ny, const CALreal nz,const CALint imove)
+void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z,const CALreal nx, const CALreal ny, const CALreal nz, const CALreal rho, const CALint imove)
 {
 	int i = x/CL;
 	int j = y/CL;
@@ -175,6 +176,7 @@ void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, c
 		calInit3Dr(ca,Q.nx[slot],	i,j,k,nx);
 		calInit3Dr(ca,Q.ny[slot],	i,j,k,ny);
 		calInit3Dr(ca,Q.nz[slot],	i,j,k,nz);
+                calInit3Dr(ca,Q.density[slot],	i,j,k,rho);
 		calInit3Di(ca,Q.imove[slot],i,j,k,imove);
 	}
 }
@@ -274,16 +276,16 @@ void partilu()
 
 	for(int i=0;i<NUMBER_OF_PARTICLES;i++)
 		danciNaPosizioni(u_modellu, particelle[i].posizione[0],	particelle[i].posizione[1],	particelle[i].posizione[2],
-									particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
-									particelle[i].imove);
+                                        particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
+                                        particelle[i].rho,              particelle[i].imove);
 
 	// calApplyElementaryProcess3D(modello, printPos);
 
-//	calApplyElementaryProcess3D(u_modellu, sbacanta);
-//	calUpdate3D(u_modellu);
-//
-//	danciNaPosizioni(u_modellu,0.001,0.001,0.001,1);
-//	calUpdate3D(u_modellu);
+//        calApplyElementaryProcess3D(u_modellu, sbacanta);
+//        calUpdate3D(u_modellu);
+////
+//        danciNaPosizioni(u_modellu,0.025,0.025,0.025,0,0,0,1000.68373876,1);
+//        calUpdate3D(u_modellu);
 
 
 

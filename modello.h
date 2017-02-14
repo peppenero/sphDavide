@@ -80,7 +80,7 @@ void transition(struct CALModel3D*,int,int,int);
 void startModello();
 void initFunction();
 void finalizeModel();
-void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z,const CALint imove);
+void danciNaPosizioni(struct CALModel3D* ca, const CALreal, const CALreal, const CALreal,const CALreal,const CALreal,const CALreal,const CALreal,const CALint imove);
 void partilu();
 
 
