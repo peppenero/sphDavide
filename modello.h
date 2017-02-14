@@ -74,11 +74,14 @@ extern struct CALRun3D* a_simulazioni;
 #define VERBOSE
 
 // Functions
+CALbyte ncestiFluiduNtraStuSlot(struct CALModel3D*, int, int, int,int);
+CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D*, int, int, int, int);
 void transition(struct CALModel3D*,int,int,int);
 void startModello();
 void initFunction();
 void finalizeModel();
-void danciNaPosizioni(struct CALModel3D*, const double, const double, const double,const CALint);
+void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z,const CALint imove);
 void partilu();
+
 
 #endif /* PROVA_H_ */

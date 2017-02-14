@@ -23,9 +23,9 @@ constexpr const static  double WALL_K = 10000.0; // wall spring constant
 
 
 //aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =-1; // particle radius
-constexpr const static  double MASS =-1; // particle mass
-constexpr const static  double DT =0.001; // time simulation quantum
+constexpr const static  double RADIUS =1.05; // particle radius
+constexpr const static  double MASS =100; // particle mass
+constexpr const static  double DT =0.009; // time simulation quantum
 
 
 
@@ -141,12 +141,13 @@ inline  VEC3r getNormal(struct CALModel3D * ca , const int i, const int j, const
     return VEC3r(calGet3Dr(ca,Q.nx[slot],i,j,k),calGet3Dr(ca,Q.ny[slot],i,j,k),calGet3Dr(ca,Q.nz[slot],i,j,k));
 }
 
-VEC3r G = VEC3r(0,-9.81,0);
+VEC3r G = VEC3r(0,0,-9.81);
 
 void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
-    for(int slot; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
-
+    for(int slot=0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
+		//---------------Messo io l'if------------------		
+		if(ncestiFluiduNtraStuSlot){
 
             CALreal pdensity = calGet3Dr(ca,Q.density[slot],i,j,k);
             CALreal ppressure = calGet3Dr(ca,Q.pressure[slot],i,j,k);
@@ -169,7 +170,9 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
         
         VEC3r v1 = getVelocity(ca,i,j,k,slot);
     
-
+		
+		//norm particle
+		VEC3r n1 = getNormal(ca,i,j,k,slot);
 
  int cn=0;
         for (int n=0; n<ca->sizeof_X; n++) {
@@ -213,7 +216,8 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
             colorFieldNormal *= MASS;
             //!!!!!!p->normal = -1.0 * colorFieldNormal; AGGIUSTA QUESTO---------------------------------------------------------------
-            colorFieldLaplacian *=MASS;
+			n1 = -1.0 * colorFieldNormal;			            
+			colorFieldLaplacian *=MASS;
 
             // surface tension force
             double colorFieldNormalMagnitude = colorFieldNormal.length(); //check that this is actually the magnitude of the vector
@@ -235,8 +239,9 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
             /**add external forces, collision, user interaction, moving rigid bodys etc.**/
             a_external = computeExternalForces(ca,i,j,k,slot);
             acc+= a_external;
+            acc = VEC3r(0.0,0.0,-0.1);
             advance(ca,i,j,k,slot,acc);
-        
+     }   
     }
 
 }
@@ -261,6 +266,8 @@ void advance(struct CALModel3D* ca , const int i, const int j, const int k , con
             v1 = getVelocity(ca,i,j,k,slot);
             VEC3r newPosition = p1 + v1*DT + acc * ipow<double>(DT,2);
             VEC3r newVelocity = (newPosition - p1) /DT;
+            printf("%f\n",p1[0]);
+            printf("%f\n",newPosition[0]);
 
 //set  new position
             calSet3Dr(ca,Q.px[slot],i,j,k,newPosition[0]);
@@ -287,11 +294,11 @@ VEC3r computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int slot)
     
     VEC3r v1 = getVelocity(ca,i,j,k,slot);
     
-     for(int slot1; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+     for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
          VEC3r p2 = getPosition(ca,i,j,k,slot1);
          CALint isWall =  calGet3Di(ca,Q.imove[slot1],i,j,k);
          VEC3r n2 =  getNormal(ca,i,j,k,slot);
-         if( isWall && slot!=slot1 && hitWall(p1,p2)){
+         if( isWall==-3 && slot!=slot1 && hitWall(p1,p2)){
               double d = glm::dot((p2 - p1),n2) + RADIUS;
             if(d > 0){
                 _a_extern +=  WALL_K * n2 * d;
@@ -299,9 +306,8 @@ VEC3r computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int slot)
             }
          }
          
-    	 
-         return _a_extern;
      }
+     return _a_extern;
 }
 
 
