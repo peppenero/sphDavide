@@ -19,6 +19,7 @@ void avanza(struct CALModel3D* ca, int i, int j, int k){
 	for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
 		if(ncestiFluiduNtraStuSlot(ca,i,j,k,n)){
                         calcolaDensita(ca,i,j,k);
+			calUpdate3D(ca);
                         computePressureAcceleration(ca,i,j,k);
 		}
 	}
@@ -369,8 +370,8 @@ void partilu()
 
 	// calApplyElementaryProcess3D(modello, printPos);
 
-        calApplyElementaryProcess3D(u_modellu, sbacanta);
-        calUpdate3D(u_modellu);
+//        calApplyElementaryProcess3D(u_modellu, sbacanta);
+//        calUpdate3D(u_modellu);
 //
 
 
@@ -378,7 +379,7 @@ void partilu()
       //  danciNaPosizioni(u_modellu,0.025,0.025,0.025,0,0,0,1000.68373876,1);
       //  calUpdate3D(u_modellu);
 
-        leggiFile();
+//        leggiFile();
 
         calUpdate3D(u_modellu);
 
