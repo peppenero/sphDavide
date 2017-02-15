@@ -24,6 +24,9 @@ extern "C" {
 // Cell side  in m
 #define CL 0.001
 
+//cell side a cazzo
+#define CL1 0.01
+
 //Cell side for divisions
 #define CLD 1000
 

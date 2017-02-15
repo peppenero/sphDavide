@@ -218,17 +218,17 @@ void specialKeys(int key, int x, int y){
 int main(int argc, char** argv)
 {
 	partilu();
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+        glutInit(&argc, argv);
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(1920, 1080);
-	glutInitWindowPosition(100, 100);
-	glutCreateWindow(argv[0]);
-	init();
-	glutDisplayFunc(display);
-	glutReshapeFunc(reshape);
-	glutSpecialFunc(specialKeys);
+        glutInitWindowPosition(100, 100);
+        glutCreateWindow(argv[0]);
+        init();
+        glutDisplayFunc(display);
+        glutReshapeFunc(reshape);
+        glutSpecialFunc(specialKeys);
     glutMouseFunc(mouse);
-	glutMainLoop();
+        glutMainLoop();
 
 
 	return 0;

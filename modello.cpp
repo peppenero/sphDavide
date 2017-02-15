@@ -1,6 +1,12 @@
 #include "modello.h"
 #include "parser.h"
 #include "sph.h"
+#include<fstream>
+#include<iostream>
+#include <cstring>
+#include <stdlib.h>
+
+using namespace std;
 
 
 struct CALModel3D* u_modellu;
@@ -201,7 +207,7 @@ void stampaAPosizioni(struct CALModel3D* ca, int i, int j, int k)
 		{
 			z = calGet3Dr(ca,Q.pz[0],i,j,k);
 			if (z != NODATA)
-				printf ("[(i,j,k),[c],z]=[(%d,%d,%d),[%d],%f]\n", i,j,k,c,z);
+                                printf ("[(i,j,k),[c],z]=[(%d,%d,%d),[%d],%f]\n", i,j,k,c,z);
 		}
 }
 
@@ -233,6 +239,88 @@ void transizioniGlobali(struct CALModel3D* modello)
 	calUpdate3D(modello);
 
 }
+
+void danciNaPosizioni1(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z, const CALint imove){
+
+
+    int i = x/CL1;
+    int j = y/CL1;
+    int k = z/CL1;
+
+    //int k = (SLICES -1) -  z/CL;
+
+    CALint slot = -1;
+    for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
+            if (calGet3Di(ca,Q.imove[c],i,j,k) == PARTICLE_ABSENT)
+            {
+                    slot = c;
+                    break;
+            }
+
+     if(slot != -1)
+     {
+           calInit3Dr(ca,Q.px[slot],   i,j,k,x	);
+           calInit3Dr(ca,Q.py[slot],   i,j,k,y	);
+           calInit3Dr(ca,Q.pz[slot],   i,j,k,z	);
+           calInit3Di(ca,Q.imove[slot],i,j,k,imove);
+     }
+
+}
+
+int leggiFile(){
+
+    FILE *posizioni;
+
+    char line[100];
+    char *token;
+    int n=0;
+    double s[3];
+
+    posizioni = fopen("posizioni.txt","r");
+
+    while (fgets(line, 100, posizioni) != NULL) {
+                    int campo=0;
+
+                    token = strtok(line," ");
+
+                    while(token != NULL){
+                            switch (campo) {
+                            case 0:
+                                    //printf("%f\n",atof(token));
+                                    s[0]=atof(token);
+                                    //particella.posizione[0]=atof(token);
+                                    campo++;
+                                    break;
+                            case 1:
+
+                                    token = strtok(NULL, " ");
+                                    s[1]=atof(token);
+                                    //printf("%f\n",atof(token));
+                                    //particella.posizione[1]=atof(token);
+                                    campo++;
+                                    break;
+                            case 2:
+
+                                    token = strtok(NULL, " ");
+                                    s[2]=atof(token);
+                                    //printf("%f\n",atof(token));
+                                    //particella.posizione[2]=atof(token);
+                                    campo++;
+                                    break;
+
+                            case 3:
+
+                                    token = strtok(NULL, " ");
+                                    campo=0;
+                                    break;
+                            }
+                    }
+
+                        danciNaPosizioni1(u_modellu, s[0]+0.4,s[1]+0.4,s[2]+0.4,1);
+
+    }
+}
+
 
 //Funzione d'inizializzazione e di start dell'automa
 void partilu()
@@ -281,13 +369,18 @@ void partilu()
 
 	// calApplyElementaryProcess3D(modello, printPos);
 
-//        calApplyElementaryProcess3D(u_modellu, sbacanta);
-//        calUpdate3D(u_modellu);
-////
-//        danciNaPosizioni(u_modellu,0.025,0.025,0.025,0,0,0,1000.68373876,1);
-//        calUpdate3D(u_modellu);
+        calApplyElementaryProcess3D(u_modellu, sbacanta);
+        calUpdate3D(u_modellu);
+//
 
 
+
+      //  danciNaPosizioni(u_modellu,0.025,0.025,0.025,0,0,0,1000.68373876,1);
+      //  calUpdate3D(u_modellu);
+
+        leggiFile();
+
+        calUpdate3D(u_modellu);
 
 
 	a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_IMPLICIT);
