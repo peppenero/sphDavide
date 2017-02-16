@@ -91,32 +91,32 @@ void stampaPosElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
     if(a_simulazioni->step == 2){
         for (int slot = 0; slot < MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
             if(calGet3Di(ca,Q.imove[slot],i,j,k)==PARTICLE_PRESENT){
-            printf("%f,%f,%f\n",calGet3Dr(ca,Q.px[slot],i,j,k),calGet3Dr(ca,Q.py[slot],i,j,k),calGet3Dr(ca,Q.pz[slot],i,j,k));
+                printf("%f,%f,%f\n",calGet3Dr(ca,Q.px[slot],i,j,k),calGet3Dr(ca,Q.py[slot],i,j,k),calGet3Dr(ca,Q.pz[slot],i,j,k));
+            }
         }
     }
-}
 }
 
 
 //Funzione di transizione globale
 void transizioniGlobali(struct CALModel3D* modello)
 {
-//    calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
+    //    calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
 
 
-//    calApplyElementaryProcess3D(modello,computeDensityElementaryProcess);
-//    calUpdate3D(modello);
+    //    calApplyElementaryProcess3D(modello,computeDensityElementaryProcess);
+    //    calUpdate3D(modello);
 
     //calApplyElementaryProcess3D(modello,stampaAltroStepElementaryProcess);
 
-//    calApplyElementaryProcess3D(modello,computePressureAndAccelerationElementaryProcess);
-//    calUpdate3D(modello);
+    //    calApplyElementaryProcess3D(modello,computePressureAndAccelerationElementaryProcess);
+    //    calUpdate3D(modello);
 
 
     //calApplyElementaryProcess3D(modello,stampaPosElementaryProcess);
 
-//    calApplyElementaryProcess3D(modello,moviliCazzu);
-//    calUpdate3D(modello);
+    //    calApplyElementaryProcess3D(modello,moviliCazzu);
+    //    calUpdate3D(modello);
 }
 
 
@@ -196,9 +196,9 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
                 y = calGet3Dr(ca, Q.py[slot],i,j,k);
                 z = calGet3Dr(ca, Q.pz[slot],i,j,k);
                 //PERICOLO----XXXXXXXXXX
-                _i = x/CL1;
-                _j = y/CL1;
-                _k = z/CL1;
+                _i = x/CL;
+                _j = y/CL;
+                _k = z/CL;
 
                 if ((i != _i) || (j != _j) || (k != _k))
                     pezziala(slot, ca,i,j,k);
@@ -214,9 +214,9 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
                 y = calGetX3Dr(ca, Q.py[slot],i,j,k,n);
                 z = calGetX3Dr(ca, Q.pz[slot],i,j,k,n);
                 //PERICOLO----XXXXXXXXXX
-                _i = x/CL1;
-                _j = y/CL1;
-                _k = z/CL1;
+                _i = x/CL;
+                _j = y/CL;
+                _k = z/CL;
 
                 int a;
                 if (i==25 && j==25 && k==24 && n==18 && slot==0)
@@ -300,9 +300,9 @@ void stampaAPosizioni(struct CALModel3D* ca, int i, int j, int k)
 
 void danciNaPosizioni1(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z, const CALint imove){
 
-    int i = x/CL1;
-    int j = y/CL1;
-    int k = z/CL1;
+    int i = x/CL;
+    int j = y/CL;
+    int k = z/CL;
 
     CALint slot = -1;
     for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
@@ -323,7 +323,24 @@ void danciNaPosizioni1(struct CALModel3D* ca, const CALreal x, const CALreal y, 
 
 }
 
+int initParticelle(){
+    double px =0;
+    double py =0;
+    double pz =0;
+    for(int i=ROWS/4; i < 3*ROWS/4; i++){
+        for (int j = COLS/4; j < 3*COLS/4; ++j) {
+            for (int k = SLICES/2-1; k <= SLICES/2+1; ++k) {
 
+
+                px = CL/2 + (i)*CL;
+                py = CL/2 + (j)*CL;
+                pz = CL/2 + (k)*CL;
+
+                danciNaPosizioni1(u_modellu, px,py,pz,1);
+            }
+        }
+    }
+}
 
 int leggiFile(){
 
@@ -414,23 +431,24 @@ void partilu()
 
 
     particellaT particelle[NUMBER_OF_PARTICLES];
-    parse(particelle);
-    for(int i=0;i<NUMBER_OF_PARTICLES;i++)
-        danciNaPosizioni(u_modellu, particelle[i].posizione[0],	particelle[i].posizione[1],	particelle[i].posizione[2],
-                particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
-                particelle[i].rho,              particelle[i].imove);
+//    parse(particelle);
+//    for(int i=0;i<NUMBER_OF_PARTICLES;i++)
+//        danciNaPosizioni(u_modellu, particelle[i].posizione[0],	particelle[i].posizione[1],	particelle[i].posizione[2],
+//                particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
+//                particelle[i].rho,              particelle[i].imove);
 
 
 
-    calApplyElementaryProcess3D(u_modellu, sbacantaElementaryProcess);
+//    calApplyElementaryProcess3D(u_modellu, sbacantaElementaryProcess);
+//  calUpdate3D(u_modellu);
+//
+//    //leggiFile();
+    initParticelle();
     calUpdate3D(u_modellu);
 
-   leggiFile();
-   calUpdate3D(u_modellu);
 
-
-    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_EXPLICIT);
-    calRunAddGlobalTransitionFunc3D(a_simulazioni, transizioniGlobali);
-    calRunAddStopConditionFunc3D(a_simulazioni, caminalu);
+//    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_EXPLICIT);
+//    calRunAddGlobalTransitionFunc3D(a_simulazioni, transizioniGlobali);
+//    calRunAddStopConditionFunc3D(a_simulazioni, caminalu);
 }
 

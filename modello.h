@@ -21,11 +21,6 @@ extern "C" {
 #define Y 0.10
 #define Z 0.10
 
-// Cell side  in m
-#define CL 0.001
-
-//cell side a cazzo
-#define CL1 0.016
 
 //Cell side for divisions
 #define CLD 1000
@@ -36,11 +31,22 @@ extern "C" {
 #define PARTICLE_ABSENT  0
 #define PARTICLE_PRESENT 1
 
-// Domain dimensions in rows, columns and layers
-#define ROWS    (int)((X)*(CLD))+1
-#define COLS    (int)((Y)*(CLD))+1
-#define SLICES  (int)((Z)*(CLD))+1
 
+// Cell side  in m
+constexpr const double CL = 0.01;
+constexpr const double wx_min = 0; //world xlestmost coordinate
+constexpr const double wx_max = 0.5; //world xlestmost coordinate
+
+constexpr const double wy_min = 0; //world xlestmost coordinate
+constexpr const double wy_max = 1.0d; //world xlestmost coordinate
+
+constexpr const double wz_min = 0; //world xlestmost coordinate
+constexpr const double wz_max = 0.5d; //world xlestmost coordinate
+
+// Domain dimensions in rows, columns and layers
+constexpr const int ROWS = (wx_max-wx_min)/CL;
+constexpr const int COLS = (wy_max-wy_min)/CL;
+constexpr const int SLICES = (wz_max-wx_min)/CL;
 
 
 
