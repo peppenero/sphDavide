@@ -7,27 +7,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-constexpr const static  double STIFFNESS  = 3.0; // Nm/kg is gas constant of water vapor
-constexpr const static  double REST_DENSITY = 998.29; //kg/m^3 is rest density of water particle
-constexpr const static  double VISCOSITY = 3.5; // Ns/m^2 or Pa*s viscosity of water
-
-constexpr const static  double  SURFACE_TENSION = 0.0728; // N/m
-constexpr const static  double  SURFACE_THRESHOLD = 7.065;
-
-constexpr const static  double GRAVITY_ACCELERATION = 9.80665;
-
-
-constexpr const static  double WALL_DAMPING =-0.9; // wall damping constant
-constexpr const static  double WALL_K = 10000.0; // wall spring constant
-
-
-
-//aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =0.0157; // particle radius
-constexpr const static  double MASS =0.0008; // particle mass
-constexpr const static  double DT =0.001; // time simulation quantum
-
-
 
 
 CALreal WPoly6(const CALreal r2, const CALreal h) {
@@ -111,7 +90,6 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
             //CAZZATA
             CALreal density = 2;
 
-
             //pos particle
             VEC3r p1 = getPosition(ca,i,j,k,slot);
 
@@ -133,16 +111,14 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
             density = density*MASS;
             const CALreal pressure = STIFFNESS* ( density - REST_DENSITY );
 
-            calSet3Dr(ca,Q.density[slot],i,j,k,density);
+            calSet3Dr(ca,Q.density[slot],i,j,k,33);
             calSet3Dr(ca,Q.pressure[slot],i,j,k,pressure);
-
-            //printf("++++++++,%f\n",calGetNext3Dr(ca,Q.density[slot],i,j,k));
         }
     }
 
 }
 
-VEC3r G = VEC3r(0,0,9.81);
+VEC3r G = VEC3r(0,988.81,0);
 
 void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
@@ -205,10 +181,10 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
                             f_pressure +=(  ppressure/pow(pdensity,2)+
                                             npressure/pow(ndensity,2)
                                             )*spikyGradient;
-                            printf("ppressure,%f--",ppressure);
-                            printf("npressure,%f--",npressure);
-                            printf("pdensity,%f--",pdensity);
-                            printf("ndensity,%f\n",ndensity);
+//                            printf("ppressure,%f--",ppressure);
+//                            printf("npressure,%f--",npressure);
+//                            printf("pdensity,%f--",pdensity);
+//                            printf("ndensity,%f\n",ndensity);
 
                             f_viscosity += ( v2 -v1)*
                                     WviscosityLaplacian(dist_2,RADIUS) / ndensity;
@@ -223,7 +199,7 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
                 }
             }
 
-            printf("fpressure----+++***,%f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
+            //printf("fpressure----+++***,%f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
 
             f_pressure *= -MASS* pdensity;
             f_viscosity *=  VISCOSITY * MASS;
@@ -248,19 +224,19 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
             VEC3r acc = (f_pressure  +f_viscosity + f_surface + f_gravity ) / pdensity;
 
-            printf("Pressure: %f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
-            printf("Viscosity:  %f,%f,%f\n",f_viscosity[0],f_viscosity[1],f_viscosity[2]);
-            printf("Surface:  %f,%f,%f\n",f_surface[0],f_surface[1],f_surface[2]);
-            printf("Gravity:  %f,%f,%f\n",f_gravity[0],f_gravity[1],f_gravity[2]);
-            printf("Density: %f\n",pdensity);
+//            printf("Pressure: %f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
+//            printf("Viscosity:  %f,%f,%f\n",f_viscosity[0],f_viscosity[1],f_viscosity[2]);
+//            printf("Surface:  %f,%f,%f\n",f_surface[0],f_surface[1],f_surface[2]);
+//            printf("Gravity:  %f,%f,%f\n",f_gravity[0],f_gravity[1],f_gravity[2]);
+//            printf("Density: %f\n",pdensity);
 
 
 
             /**add external forces, collision, user interaction, moving rigid bodys etc.**/
             a_external = computeExternalForces(ca,i,j,k,slot);
             acc+= a_external;
-            //acc = VEC3r(0.0,0.0,-0.1);
-            printf("Accel: %f,%f,%f\n",acc[0],acc[1],acc[2]);
+            //acc = VEC3r(0.0,1000.0,0.0);
+            //printf("Accel: %f,%f,%f\n",acc[0],acc[1],acc[2]);
             advance(ca,i,j,k,slot,acc);
         }
     }
@@ -287,9 +263,13 @@ void advance(struct CALModel3D* ca , const int i, const int j, const int k , con
     v1 = getVelocity(ca,i,j,k,slot);
     VEC3r newPosition = p1 + v1*DT + acc * ipow<double>(DT,2);
     VEC3r newVelocity = (newPosition - p1) /DT;
-    printf("Vecchia: %f,%f,%f\n",p1[0],p1[1],p1[2]);
-    printf("Nuova: %f,%f,%f\n",newPosition[0],newPosition[1],newPosition[2]);
 
+    //STAMPA POSIZIONI
+
+    //if(a_simulazioni->step==1){
+        //printf("Vecchia: %f,%f,%f\n",p1[0],p1[1],p1[2]);
+        //printf("Nuova: %f,%f,%f\n",newPosition[0],newPosition[1],newPosition[2]);
+    //}
     //set  new position
     calSet3Dr(ca,Q.px[slot],i,j,k,newPosition[0]);
     calSet3Dr(ca,Q.py[slot],i,j,k,newPosition[1]);
@@ -304,7 +284,7 @@ void advance(struct CALModel3D* ca , const int i, const int j, const int k , con
 
 //TODO!--------------------------------------------
 bool hitWall(const VEC3r& p1,const VEC3r& p2) {
-    if(glm::distance(p1,p2)<=0.02)
+    if(glm::distance(p1,p2)<=RADIUS)
         return true;
     return false;
 }

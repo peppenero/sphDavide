@@ -1,11 +1,14 @@
 #include "modello.h"
 #include "parser.h"
 #include "sph.h"
+#include <cstring>
 
 
 struct CALModel3D* u_modellu;
 struct CALRun3D* a_simulazioni;
 struct Substates Q;
+
+
 
 void computeDensityElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
     for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
@@ -16,6 +19,36 @@ void computeDensityElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
     }
 }
 
+
+
+void stampaAltroStepElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
+    //printf("%i",a_simulazioni->step);
+    if(a_simulazioni->step==2){
+        for(int a=0;a<MAX_NUMBER_OF_PARTICLES_PER_CELL;a++){
+            //if(calGet3Di(ca,Q.imove[a],i,j,k)==PARTICLE_PRESENT){
+
+            printf("density-----,%f\n",calGet3Dr(ca,Q.density[a],i,j,k));
+            printf("pressure-----,%f\n",calGet3Dr(ca,Q.pressure[a],i,j,k));
+
+        }
+    }
+}
+
+
+
+void stampaturiElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
+    if(a_simulazioni->step==1){
+        for(int a=0;a<MAX_NUMBER_OF_PARTICLES_PER_CELL;a++){
+            if(calGet3Di(ca,Q.imove[a],i,j,k)==PARTICLE_PRESENT){
+                printf("%f %f %f %f %f %f %f\n",calGet3Dr(ca,Q.px[a],i,j,k),calGet3Dr(ca,Q.py[a],i,j,k),calGet3Dr(ca,Q.pz[a],i,j,k),calGet3Dr(ca,Q.vx[a],i,j,k),calGet3Dr(ca,Q.vy[a],i,j,k),calGet3Dr(ca,Q.vz[a],i,j,k),calGet3Dr(ca,Q.mass[a],i,j,k));
+            }
+        }
+    }
+    //printf("USCITO--------------------------------------\n");
+}
+
+
+
 void computePressureAndAccelerationElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
     for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
         if(ncestiFluiduNtraStuSlot(ca,i,j,k,n)){
@@ -23,6 +56,67 @@ void computePressureAndAccelerationElementaryProcess(struct CALModel3D* ca, int 
             break; //messo perche senza chiamerebbe le due funzioni sopra più di una volta
         }
     }
+
+}
+
+//Funzione che lascia solo le particelle di boundary
+void sbacantaElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
+{
+    if (ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
+        for (int slot = 0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
+            pezziala(slot, ca, i, j, k);
+}
+
+//Funzione di prova per simulare il movimento sull'asse Y.
+void moviliElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
+{
+    if (!ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
+        return;
+
+    CALreal delta_z = -CL/3;
+    CALreal z;
+    CALreal z_new;
+
+    for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
+        if (calGet3Di(ca, Q.imove[c],i,j,k) == PARTICLE_PRESENT)
+        {
+            z = calGet3Dr(ca, Q.pz[c],i,j,k);
+            z_new = z + delta_z;
+            calSet3Dr(ca, Q.pz[c],i,j,k,z_new);
+        }
+}
+
+
+void stampaPosElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
+    if(a_simulazioni->step == 2){
+        for (int slot = 0; slot < MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
+            if(calGet3Di(ca,Q.imove[slot],i,j,k)==PARTICLE_PRESENT){
+            printf("%f,%f,%f\n",calGet3Dr(ca,Q.px[slot],i,j,k),calGet3Dr(ca,Q.py[slot],i,j,k),calGet3Dr(ca,Q.pz[slot],i,j,k));
+        }
+    }
+}
+}
+
+
+//Funzione di transizione globale
+void transizioniGlobali(struct CALModel3D* modello)
+{
+//    calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
+
+
+//    calApplyElementaryProcess3D(modello,computeDensityElementaryProcess);
+//    calUpdate3D(modello);
+
+    //calApplyElementaryProcess3D(modello,stampaAltroStepElementaryProcess);
+
+//    calApplyElementaryProcess3D(modello,computePressureAndAccelerationElementaryProcess);
+//    calUpdate3D(modello);
+
+
+    //calApplyElementaryProcess3D(modello,stampaPosElementaryProcess);
+
+//    calApplyElementaryProcess3D(modello,moviliCazzu);
+//    calUpdate3D(modello);
 }
 
 
@@ -38,33 +132,19 @@ CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D* ca, int i, int j,
     return CAL_FALSE;
 }
 
+
+
 CALbyte ncestiFluiduNtraStuSlot(struct CALModel3D* ca, int i, int j, int k,int slot){
     if(calGet3Di(ca,Q.imove[slot],i,j,k)==1)
         return CAL_TRUE;
     return CAL_FALSE;
 }
 
-//Funzione di prova per simulare il movimento sull'asse Y.
-void movili(struct CALModel3D* ca, int i, int j, int k)
-{
-    if (!ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
-        return;
 
-    CALreal delta_z = -CL/3;
-    CALreal z;
-    CALreal z_new;
 
-    for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
-        if (calGet3Di(ca, Q.imove[c],i,j,k) == PARTICLE_PRESENT)
-        {
-            z = calGet3Dr(ca, Q.pz[c],i,j,k);
-            z_new = z + delta_z;
-            calSet3Dr(ca, Q.pz[c],i,j,k,z_new);
 
-            //            CALreal z_new_test = calGetNext3Dr(ca,Q.pz[c],i,j,k);
-            //            int a = 0;
-        }
-}
+
+
 
 //Funzione che dato uno slot appartenente alla cella (i,j,k) lo libera.
 void pezziala(int slot, struct CALModel3D* ca, int i, int j, int k)
@@ -80,6 +160,8 @@ void pezziala(int slot, struct CALModel3D* ca, int i, int j, int k)
     calSet3Di(ca, Q.imove[slot],i,j,k,PARTICLE_ABSENT);
 }
 
+
+
 //Funzione che dato uno slot libero muove le particelle che hanno cambiato cella.
 void sucala(int slot, int e, struct CALModel3D* ca, int i, int j, int k, int n)
 {
@@ -94,14 +176,12 @@ void sucala(int slot, int e, struct CALModel3D* ca, int i, int j, int k, int n)
     calSet3Di(ca, Q.imove[slot],i,j,k,calGetX3Di(ca,Q.imove[e],i,j,k,n));
 }
 
+
+
 //Funzione che gestisce il movimento delle particelle tramite la chiamata delle
 //funzioni pezziala e sucala
 void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
 {
-    //    CALreal z_min = k*CL;
-    //    CALreal z_max = (k+1)*CL;
-    //    CALreal z_min = (SLICES-1 - (k+1))*CL;
-    //    CALreal z_max = (SLICES-1 - k)*CL;
 
     CALreal x,  y,  z;
     CALint _i, _j, _k;
@@ -115,10 +195,10 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
                 x = calGet3Dr(ca, Q.px[slot],i,j,k);
                 y = calGet3Dr(ca, Q.py[slot],i,j,k);
                 z = calGet3Dr(ca, Q.pz[slot],i,j,k);
-
-                _i = x/CL;
-                _j = y/CL;
-                _k = z/CL;
+                //PERICOLO----XXXXXXXXXX
+                _i = x/CL1;
+                _j = y/CL1;
+                _k = z/CL1;
 
                 if ((i != _i) || (j != _j) || (k != _k))
                     pezziala(slot, ca,i,j,k);
@@ -133,10 +213,10 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
                 x = calGetX3Dr(ca, Q.px[slot],i,j,k,n);
                 y = calGetX3Dr(ca, Q.py[slot],i,j,k,n);
                 z = calGetX3Dr(ca, Q.pz[slot],i,j,k,n);
-
-                _i = x/CL;
-                _j = y/CL;
-                _k = z/CL;
+                //PERICOLO----XXXXXXXXXX
+                _i = x/CL1;
+                _j = y/CL1;
+                _k = z/CL1;
 
                 int a;
                 if (i==25 && j==25 && k==24 && n==18 && slot==0)
@@ -159,6 +239,7 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
 }
 
 
+
 //Funzione che date le posizione reali della particella le converte in indici
 //della matrice dell'automa cellulare ed imposta i valori iniziali.
 void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z,const CALreal nx, const CALreal ny, const CALreal nz, const CALreal rho, const CALint imove)
@@ -166,7 +247,6 @@ void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, c
     int i = x/CL;
     int j = y/CL;
     int k = z/CL;
-    //int k = (SLICES -1) -  z/CL;
 
     CALint slot = -1;
     for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
@@ -189,6 +269,8 @@ void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, c
     }
 }
 
+
+
 //Funzione che fa muovere e fermare l'automa.
 CALbyte caminalu(struct CALModel3D* modello)
 {
@@ -199,6 +281,8 @@ CALbyte caminalu(struct CALModel3D* modello)
 
     return CAL_TRUE;
 }
+
+
 
 //Funzione di prova
 void stampaAPosizioni(struct CALModel3D* ca, int i, int j, int k)
@@ -213,46 +297,12 @@ void stampaAPosizioni(struct CALModel3D* ca, int i, int j, int k)
         }
 }
 
-//Funzione che lascia solo le particelle di boundary
-void sbacanta(struct CALModel3D* ca, int i, int j, int k)
-{
-    if (ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
-        for (int slot = 0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
-            pezziala(slot, ca, i, j, k);
-}
-
-//Funzione di transizione globale
-void transizioniGlobali(struct CALModel3D* modello)
-{
-    //calApplyElementaryProcess3D(modello,movili);
-    //calUpdate3D(modello);
-
-    //    printf("z(25,25,25) = %f\n", calGet3Dr(modello,Q.pz[0],25,25,25));
-    //    for (int n=0; n<modello->sizeof_X; n++)
-    //        printf("z(25,25,24; %d) = %f\n", n, calGetX3Dr(modello,Q.pz[0],25,25,24,n));
-
-    //calApplyElementaryProcess3D(modello,moviliCazzu);
-    //calUpdate3D(modello);
-
-    calApplyElementaryProcess3D(modello,computeDensityElementaryProcess);
-    calUpdate3D(modello);
-
-    calApplyElementaryProcess3D(modello,computePressureAndAccelerationElementaryProcess);
-    calUpdate3D(modello);
-
-    calApplyElementaryProcess3D(modello,moviliCazzu);
-    calUpdate3D(modello);
-
-}
 
 void danciNaPosizioni1(struct CALModel3D* ca, const CALreal x, const CALreal y, const CALreal z, const CALint imove){
-
 
     int i = x/CL1;
     int j = y/CL1;
     int k = z/CL1;
-
-    //int k = (SLICES -1) -  z/CL;
 
     CALint slot = -1;
     for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
@@ -267,10 +317,13 @@ void danciNaPosizioni1(struct CALModel3D* ca, const CALreal x, const CALreal y, 
         calInit3Dr(ca,Q.px[slot],   i,j,k,x	);
         calInit3Dr(ca,Q.py[slot],   i,j,k,y	);
         calInit3Dr(ca,Q.pz[slot],   i,j,k,z	);
-        calInit3Di(ca,Q.imove[slot],i,j,k,imove);
+        calInit3Dr(ca,Q.mass[slot], i,j,k,MASS  );
+        calInit3Di(ca,Q.imove[slot],i,j,k,imove );
     }
 
 }
+
+
 
 int leggiFile(){
 
@@ -287,50 +340,44 @@ int leggiFile(){
         int campo=0;
 
         token = strtok(line," ");
-
+        n++;
         while(token != NULL){
             switch (campo) {
             case 0:
-                //printf("%f\n",atof(token));
                 s[0]=atof(token);
-                //particella.posizione[0]=atof(token);
                 campo++;
                 break;
             case 1:
-
                 token = strtok(NULL, " ");
                 s[1]=atof(token);
-                //printf("%f\n",atof(token));
-                //particella.posizione[1]=atof(token);
                 campo++;
                 break;
             case 2:
-
                 token = strtok(NULL, " ");
                 s[2]=atof(token);
-                //printf("%f\n",atof(token));
-                //particella.posizione[2]=atof(token);
                 campo++;
                 break;
-
             case 3:
-
                 token = strtok(NULL, " ");
                 campo=0;
                 break;
             }
         }
 
-        danciNaPosizioni1(u_modellu, s[0]+0.4,s[1]+0.4,s[2]+0.4,1);
+        danciNaPosizioni1(u_modellu, s[0],s[1],s[2],1);
 
     }
+
+    calApplyElementaryProcess3D(u_modellu,stampaturiElementaryProcess);
 }
+
 
 
 //Funzione d'inizializzazione e di start dell'automa
 void partilu()
 {
     u_modellu = calCADef3D(ROWS,COLS,SLICES,CAL_MOORE_NEIGHBORHOOD_3D,CAL_SPACE_TOROIDAL,CAL_NO_OPT);
+
 
     for(int i=0;i<MAX_NUMBER_OF_PARTICLES_PER_CELL;i++)
     {
@@ -343,6 +390,7 @@ void partilu()
         Q.nx[i]    = calAddSubstate3Dr(u_modellu);
         Q.ny[i]    = calAddSubstate3Dr(u_modellu);
         Q.nz[i]    = calAddSubstate3Dr(u_modellu);
+        Q.mass[i] = calAddSubstate3Dr(u_modellu);
         Q.density[i] = calAddSubstate3Dr(u_modellu);
         Q.pressure[i] = calAddSubstate3Dr(u_modellu);
         Q.imove[i] = calAddSubstate3Di(u_modellu);
@@ -357,40 +405,32 @@ void partilu()
         calInitSubstate3Dr(u_modellu,	Q.nx[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.ny[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.nz[i],		0);
-        calInitSubstate3Dr(u_modellu,	Q.density[i],	0);
-        calInitSubstate3Dr(u_modellu,	Q.pressure[i],	0);
+        calInitSubstate3Dr(u_modellu,	Q.mass[i],		NODATA);
+        calInitSubstate3Dr(u_modellu,	Q.density[i],   	0);
+        calInitSubstate3Dr(u_modellu,	Q.pressure[i],          0);
         calInitSubstate3Di(u_modellu,	Q.imove[i],		PARTICLE_ABSENT);
         calInitSubstate3Db(u_modellu,	Q.flag[i],		0);
     }
 
+
     particellaT particelle[NUMBER_OF_PARTICLES];
-
     parse(particelle);
-
     for(int i=0;i<NUMBER_OF_PARTICLES;i++)
         danciNaPosizioni(u_modellu, particelle[i].posizione[0],	particelle[i].posizione[1],	particelle[i].posizione[2],
                 particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
                 particelle[i].rho,              particelle[i].imove);
 
-    // calApplyElementaryProcess3D(modello, printPos);
-
-    calApplyElementaryProcess3D(u_modellu, sbacanta);
-    calUpdate3D(u_modellu);
-    //
 
 
-
-    //  danciNaPosizioni(u_modellu,0.025,0.025,0.025,0,0,0,1000.68373876,1);
-    //  calUpdate3D(u_modellu);
-
-    leggiFile();
+    calApplyElementaryProcess3D(u_modellu, sbacantaElementaryProcess);
     calUpdate3D(u_modellu);
 
+   leggiFile();
+   calUpdate3D(u_modellu);
 
-    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_IMPLICIT);
 
+    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_EXPLICIT);
     calRunAddGlobalTransitionFunc3D(a_simulazioni, transizioniGlobali);
-
     calRunAddStopConditionFunc3D(a_simulazioni, caminalu);
 }
 

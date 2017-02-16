@@ -19,18 +19,18 @@ extern "C" {
 // Domain dimensions in m
 #define X 0.10
 #define Y 0.10
-#define Z 0.05
+#define Z 0.10
 
 // Cell side  in m
 #define CL 0.001
 
 //cell side a cazzo
-#define CL1 0.015
+#define CL1 0.016
 
 //Cell side for divisions
 #define CLD 1000
 
-#define MAX_NUMBER_OF_PARTICLES_PER_CELL 3
+#define MAX_NUMBER_OF_PARTICLES_PER_CELL 4
 #define NODATA -10 // No particle condition (used in px, py and pz)
 #define PARTICLE_EDGE   -3
 #define PARTICLE_ABSENT  0
@@ -44,25 +44,25 @@ extern "C" {
 
 
 
-
 //Sottostati
 
 struct Substates
 {
-	struct CALSubstate3Dr *px[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *py[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *pz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *vx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *vy[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *vz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *px[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *py[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *pz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *vx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *vy[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *vz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     
     struct CALSubstate3Dr *nx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *ny[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *nz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-    
-	struct CALSubstate3Dr *density[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Dr *pressure[MAX_NUMBER_OF_PARTICLES_PER_CELL];
-	struct CALSubstate3Di *imove[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *ny[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *nz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+
+    struct CALSubstate3Dr *mass[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *density[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *pressure[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Di *imove[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     
     struct CALSubstate3Db *flag[MAX_NUMBER_OF_PARTICLES_PER_CELL];
 };
@@ -73,17 +73,19 @@ extern struct Substates Q;
 extern struct CALRun3D* a_simulazioni;
 
 // Computational steps
-#define STEPS 30
+#define STEPS 5
 #define VERBOSE
 
 // Functions
+void pezziala(int , struct CALModel3D* , int , int , int );
+void moviliCazzu(struct CALModel3D* , int , int , int );
 CALbyte ncestiFluiduNtraStuSlot(struct CALModel3D*, int, int, int,int);
 CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D*, int, int, int, int);
 void transition(struct CALModel3D*,int,int,int);
 void startModello();
 void initFunction();
 void finalizeModel();
-void danciNaPosizioni(struct CALModel3D* ca, const CALreal, const CALreal, const CALreal,const CALreal,const CALreal,const CALreal,const CALreal,const CALint imove);
+void danciNaPosizioni(struct CALModel3D*, const CALreal, const CALreal, const CALreal,const CALreal,const CALreal,const CALreal,const CALreal,const CALint);
 void partilu();
 
 
