@@ -8,6 +8,9 @@ struct CALModel3D* u_modellu;
 struct CALRun3D* a_simulazioni;
 struct Substates Q;
 
+constexpr const double II=0.205010;
+constexpr const double JJ=0.395000;
+constexpr const double KK=0.265000;
 
 void computeDensityElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
     for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
@@ -102,7 +105,7 @@ void transizioniGlobali(struct CALModel3D* modello)
 {
     if(stampa){
         printf("------------pos------------|------------vel------------|------------acc------------|--------norm--------|mass|pradius|density|pressure|\n");
-        calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
+       // calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
         printf("******************************************STEP******************************************\n");
     }
 
@@ -284,6 +287,7 @@ void danciNaPosizioni(struct CALModel3D* ca, const CALreal x, const CALreal y, c
 //Funzione che fa muovere e fermare l'automa.
 CALbyte caminalu(struct CALModel3D* modello)
 {
+    fprintf(stderr,"%d step\n", a_simulazioni->step);
     CALint step = a_simulazioni->step;
 
     if (step <= STEPS)
@@ -473,7 +477,7 @@ void partilu()
     calUpdate3D(u_modellu);
 
 
-    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_EXPLICIT);
+    a_simulazioni = calRunDef3D(u_modellu,1,1,CAL_UPDATE_EXPLICIT);
     calRunAddGlobalTransitionFunc3D(a_simulazioni, transizioniGlobali);
     calRunAddStopConditionFunc3D(a_simulazioni, caminalu);
 }

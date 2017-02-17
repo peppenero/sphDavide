@@ -33,7 +33,7 @@ constexpr const static  double MASS =0.0008; // particle mass
 constexpr const static  double DT =0.001; // time simulation quantum
 
 
-static bool stampa=false;
+static bool stampa=true;
 
 typedef glm::tvec3<int> VEC3i;
 typedef glm::tvec3<double> VEC3r;

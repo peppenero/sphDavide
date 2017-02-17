@@ -33,7 +33,7 @@ extern "C" {
 
 
 // Cell side  in m
-constexpr const double CL = 0.01;
+constexpr const double CL = 0.009;
 constexpr const double wx_min = 0; //world xlestmost coordinate
 constexpr const double wx_max = 0.5d; //world xlestmost coordinate
 
@@ -84,7 +84,7 @@ extern struct Substates Q;
 extern struct CALRun3D* a_simulazioni;
 
 // Computational steps
-#define STEPS 200
+#define STEPS 100
 #define VERBOSE
 
 // Functions
