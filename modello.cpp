@@ -9,7 +9,6 @@ struct CALRun3D* a_simulazioni;
 struct Substates Q;
 
 
-
 void computeDensityElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
     for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
         if(ncestiFluiduNtraStuSlot(ca,i,j,k,n)){
@@ -37,10 +36,10 @@ void stampaAltroStepElementaryProcess(struct CALModel3D* ca, int i, int j, int k
 
 
 void stampaturiElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
-    if(a_simulazioni->step==1){
+    if(a_simulazioni->step<=10){
         for(int a=0;a<MAX_NUMBER_OF_PARTICLES_PER_CELL;a++){
             if(calGet3Di(ca,Q.imove[a],i,j,k)==PARTICLE_PRESENT){
-                printf("%f %f %f %f %f %f %f\n",calGet3Dr(ca,Q.px[a],i,j,k),calGet3Dr(ca,Q.py[a],i,j,k),calGet3Dr(ca,Q.pz[a],i,j,k),calGet3Dr(ca,Q.vx[a],i,j,k),calGet3Dr(ca,Q.vy[a],i,j,k),calGet3Dr(ca,Q.vz[a],i,j,k),calGet3Dr(ca,Q.mass[a],i,j,k));
+                printf("%f %f %f %f %f %f %f %f %f %f %f %f\n",calGet3Dr(ca,Q.px[a],i,j,k),calGet3Dr(ca,Q.py[a],i,j,k),calGet3Dr(ca,Q.pz[a],i,j,k),calGet3Dr(ca,Q.vx[a],i,j,k),calGet3Dr(ca,Q.vy[a],i,j,k),calGet3Dr(ca,Q.vz[a],i,j,k),calGet3Dr(ca,Q.ax[a],i,j,k),calGet3Dr(ca,Q.ay[a],i,j,k),calGet3Dr(ca,Q.az[a],i,j,k),calGet3Dr(ca,Q.mass[a],i,j,k),calGet3Dr(ca,Q.density[a],i,j,k),calGet3Dr(ca,Q.pressure[a],i,j,k));
             }
         }
     }
@@ -101,22 +100,25 @@ void stampaPosElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
 //Funzione di transizione globale
 void transizioniGlobali(struct CALModel3D* modello)
 {
-    //    calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
+    if(stampa){
+        printf("------------pos------------|------------vel------------|------------acc------------|--------norm--------|mass|pradius|density|pressure|\n");
+        calApplyElementaryProcess3D(modello,stampaturiElementaryProcess);
+        printf("******************************************STEP******************************************\n");
+    }
 
-
-    //    calApplyElementaryProcess3D(modello,computeDensityElementaryProcess);
-    //    calUpdate3D(modello);
+    calApplyElementaryProcess3D(modello,computeDensityElementaryProcess);
+    calUpdate3D(modello);
 
     //calApplyElementaryProcess3D(modello,stampaAltroStepElementaryProcess);
 
-    //    calApplyElementaryProcess3D(modello,computePressureAndAccelerationElementaryProcess);
-    //    calUpdate3D(modello);
+    calApplyElementaryProcess3D(modello,computePressureAndAccelerationElementaryProcess);
+    calUpdate3D(modello);
 
 
     //calApplyElementaryProcess3D(modello,stampaPosElementaryProcess);
 
-    //    calApplyElementaryProcess3D(modello,moviliCazzu);
-    //    calUpdate3D(modello);
+    calApplyElementaryProcess3D(modello,moviliCazzu);
+    calUpdate3D(modello);
 }
 
 
@@ -155,8 +157,12 @@ void pezziala(int slot, struct CALModel3D* ca, int i, int j, int k)
     calSet3Dr(ca, Q.vx[slot],   i,j,k,0);
     calSet3Dr(ca, Q.vy[slot],   i,j,k,0);
     calSet3Dr(ca, Q.vz[slot],   i,j,k,0);
-    calSet3Dr(ca, Q.density[slot],   i,j,k,NODATA);
+    calSet3Dr(ca, Q.ax[slot],   i,j,k,0);
+    calSet3Dr(ca, Q.ay[slot],   i,j,k,0);
+    calSet3Dr(ca, Q.az[slot],   i,j,k,0);
+    calSet3Dr(ca, Q.density[slot],   i,j,k,0);
     calSet3Dr(ca, Q.pressure[slot],   i,j,k,0);
+    calSet3Dr(ca, Q.mass[slot], i,j,k,0);
     calSet3Di(ca, Q.imove[slot],i,j,k,PARTICLE_ABSENT);
 }
 
@@ -171,8 +177,12 @@ void sucala(int slot, int e, struct CALModel3D* ca, int i, int j, int k, int n)
     calSet3Dr(ca, Q.vx[slot],i,j,k,calGetX3Dr(ca,Q.vx[e],i,j,k,n));
     calSet3Dr(ca, Q.vy[slot],i,j,k,calGetX3Dr(ca,Q.vy[e],i,j,k,n));
     calSet3Dr(ca, Q.vz[slot],i,j,k,calGetX3Dr(ca,Q.vz[e],i,j,k,n));
+    calSet3Dr(ca, Q.ax[slot],i,j,k,calGetX3Dr(ca,Q.vx[e],i,j,k,n));
+    calSet3Dr(ca, Q.ay[slot],i,j,k,calGetX3Dr(ca,Q.vy[e],i,j,k,n));
+    calSet3Dr(ca, Q.az[slot],i,j,k,calGetX3Dr(ca,Q.vz[e],i,j,k,n));
     calSet3Dr(ca, Q.density[slot],i,j,k,calGetX3Dr(ca,Q.density[e],i,j,k,n));
     calSet3Dr(ca, Q.pressure[slot],i,j,k,calGetX3Dr(ca,Q.pressure[e],i,j,k,n));
+    calSet3Dr(ca, Q.mass[slot],i,j,k,calGetX3Dr(ca,Q.mass[e],i,j,k,n));
     calSet3Di(ca, Q.imove[slot],i,j,k,calGetX3Di(ca,Q.imove[e],i,j,k,n));
 }
 
@@ -317,8 +327,8 @@ void danciNaPosizioni1(struct CALModel3D* ca, const CALreal x, const CALreal y, 
         calInit3Dr(ca,Q.px[slot],   i,j,k,x	);
         calInit3Dr(ca,Q.py[slot],   i,j,k,y	);
         calInit3Dr(ca,Q.pz[slot],   i,j,k,z	);
-        calInit3Dr(ca,Q.mass[slot], i,j,k,MASS  );
-        calInit3Di(ca,Q.imove[slot],i,j,k,imove );
+        calInit3Dr(ca,Q.mass[slot], i,j,k,MASS);
+        calInit3Di(ca,Q.imove[slot],i,j,k,imove);
     }
 
 }
@@ -332,9 +342,11 @@ int initParticelle(){
             for (int k = SLICES/2-1; k <= SLICES/2+1; ++k) {
 
 
+
                 px = CL/2 + (i)*CL;
                 py = CL/2 + (j)*CL;
                 pz = CL/2 + (k)*CL;
+
 
                 danciNaPosizioni1(u_modellu, px,py,pz,1);
             }
@@ -401,12 +413,19 @@ void partilu()
         Q.px[i]    = calAddSubstate3Dr(u_modellu);
         Q.py[i]    = calAddSubstate3Dr(u_modellu);
         Q.pz[i]    = calAddSubstate3Dr(u_modellu);
+
         Q.vx[i]    = calAddSubstate3Dr(u_modellu);
         Q.vy[i]    = calAddSubstate3Dr(u_modellu);
         Q.vz[i]    = calAddSubstate3Dr(u_modellu);
+
+        Q.ax[i]    = calAddSubstate3Dr(u_modellu);
+        Q.ay[i]    = calAddSubstate3Dr(u_modellu);
+        Q.az[i]    = calAddSubstate3Dr(u_modellu);
+
         Q.nx[i]    = calAddSubstate3Dr(u_modellu);
         Q.ny[i]    = calAddSubstate3Dr(u_modellu);
         Q.nz[i]    = calAddSubstate3Dr(u_modellu);
+
         Q.mass[i] = calAddSubstate3Dr(u_modellu);
         Q.density[i] = calAddSubstate3Dr(u_modellu);
         Q.pressure[i] = calAddSubstate3Dr(u_modellu);
@@ -416,13 +435,20 @@ void partilu()
         calInitSubstate3Dr(u_modellu,	Q.px[i],		NODATA);
         calInitSubstate3Dr(u_modellu,	Q.py[i],		NODATA);
         calInitSubstate3Dr(u_modellu,	Q.pz[i],		NODATA);
+
         calInitSubstate3Dr(u_modellu,	Q.vx[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.vy[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.vz[i],		0);
+
+        calInitSubstate3Dr(u_modellu,	Q.ax[i],		0);
+        calInitSubstate3Dr(u_modellu,	Q.ay[i],		0);
+        calInitSubstate3Dr(u_modellu,	Q.az[i],		0);
+
         calInitSubstate3Dr(u_modellu,	Q.nx[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.ny[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.nz[i],		0);
-        calInitSubstate3Dr(u_modellu,	Q.mass[i],		NODATA);
+
+        calInitSubstate3Dr(u_modellu,	Q.mass[i],		0);
         calInitSubstate3Dr(u_modellu,	Q.density[i],   	0);
         calInitSubstate3Dr(u_modellu,	Q.pressure[i],          0);
         calInitSubstate3Di(u_modellu,	Q.imove[i],		PARTICLE_ABSENT);
@@ -431,24 +457,24 @@ void partilu()
 
 
     particellaT particelle[NUMBER_OF_PARTICLES];
-//    parse(particelle);
-//    for(int i=0;i<NUMBER_OF_PARTICLES;i++)
-//        danciNaPosizioni(u_modellu, particelle[i].posizione[0],	particelle[i].posizione[1],	particelle[i].posizione[2],
-//                particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
-//                particelle[i].rho,              particelle[i].imove);
+    //    parse(particelle);
+    //    for(int i=0;i<NUMBER_OF_PARTICLES;i++)
+    //        danciNaPosizioni(u_modellu, particelle[i].posizione[0],	particelle[i].posizione[1],	particelle[i].posizione[2],
+    //                particelle[i].normale[0],	particelle[i].normale[1],	particelle[i].normale[2],
+    //                particelle[i].rho,              particelle[i].imove);
 
 
 
-//    calApplyElementaryProcess3D(u_modellu, sbacantaElementaryProcess);
-//  calUpdate3D(u_modellu);
-//
-//    //leggiFile();
+    //    calApplyElementaryProcess3D(u_modellu, sbacantaElementaryProcess);
+    //  calUpdate3D(u_modellu);
+    //
+    //    //leggiFile();
     initParticelle();
     calUpdate3D(u_modellu);
 
 
-//    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_EXPLICIT);
-//    calRunAddGlobalTransitionFunc3D(a_simulazioni, transizioniGlobali);
-//    calRunAddStopConditionFunc3D(a_simulazioni, caminalu);
+    a_simulazioni = calRunDef3D(u_modellu,1,CAL_RUN_LOOP,CAL_UPDATE_EXPLICIT);
+    calRunAddGlobalTransitionFunc3D(a_simulazioni, transizioniGlobali);
+    calRunAddStopConditionFunc3D(a_simulazioni, caminalu);
 }
 

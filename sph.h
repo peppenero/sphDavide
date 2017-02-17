@@ -27,12 +27,13 @@ constexpr const static  double WALL_DAMPING =-0.9; // wall damping constant
 constexpr const static  double WALL_K = 10000.0; // wall spring constant
 
 
-
 //aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =0.0157; // particle radius
+constexpr const static  double RADIUS =0.016; // particle radius
 constexpr const static  double MASS =0.0008; // particle mass
 constexpr const static  double DT =0.001; // time simulation quantum
 
+
+static bool stampa=false;
 
 typedef glm::tvec3<int> VEC3i;
 typedef glm::tvec3<double> VEC3r;

@@ -17,9 +17,9 @@ extern "C" {
 #define NUMBER_OF_PARTICLES 14988
 
 // Domain dimensions in m
-#define X 0.10
-#define Y 0.10
-#define Z 0.10
+#define X 0.5
+#define Y 1
+#define Z 0.5
 
 
 //Cell side for divisions
@@ -35,7 +35,7 @@ extern "C" {
 // Cell side  in m
 constexpr const double CL = 0.01;
 constexpr const double wx_min = 0; //world xlestmost coordinate
-constexpr const double wx_max = 0.5; //world xlestmost coordinate
+constexpr const double wx_max = 0.5d; //world xlestmost coordinate
 
 constexpr const double wy_min = 0; //world xlestmost coordinate
 constexpr const double wy_max = 1.0d; //world xlestmost coordinate
@@ -57,9 +57,14 @@ struct Substates
     struct CALSubstate3Dr *px[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     struct CALSubstate3Dr *py[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     struct CALSubstate3Dr *pz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+
     struct CALSubstate3Dr *vx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     struct CALSubstate3Dr *vy[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     struct CALSubstate3Dr *vz[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+
+    struct CALSubstate3Dr *ax[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *ay[MAX_NUMBER_OF_PARTICLES_PER_CELL];
+    struct CALSubstate3Dr *az[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     
     struct CALSubstate3Dr *nx[MAX_NUMBER_OF_PARTICLES_PER_CELL];
     struct CALSubstate3Dr *ny[MAX_NUMBER_OF_PARTICLES_PER_CELL];
@@ -79,7 +84,7 @@ extern struct Substates Q;
 extern struct CALRun3D* a_simulazioni;
 
 // Computational steps
-#define STEPS 5
+#define STEPS 200
 #define VERBOSE
 
 // Functions

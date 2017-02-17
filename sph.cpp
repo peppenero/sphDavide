@@ -9,6 +9,7 @@
 
 
 
+
 CALreal WPoly6(const CALreal r2, const CALreal h) {
     const CALreal coefficient = 315.0/(64.0*M_PI*pow(h,9));
     const CALreal hSquared = pow(h,2);
@@ -73,10 +74,9 @@ inline  VEC3r getNormal(struct CALModel3D * ca , const int i, const int j, const
 }
 
 
-//CAZZATA TANTO PER
 bool isNeigh(VEC3r p1, VEC3r p2) {
     double d = glm::distance(p1,p2);
-    //printf("DISTANZA %f",d);
+    printf("pascali %f\n",d);
     if(d<=RADIUS)
         return true;
     return false;
@@ -100,6 +100,7 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
 
                     //v1 and v2 does not refer to the very same particle
                     if(!(n==0 && slot1==slot) && isNeigh(p1,p2)) {
+                       // stampa=false;
                         VEC3r d = p1-p2;
 
                         CALreal dist2 = glm::dot(d,d);
@@ -111,14 +112,14 @@ void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
             density = density*MASS;
             const CALreal pressure = STIFFNESS* ( density - REST_DENSITY );
 
-            calSet3Dr(ca,Q.density[slot],i,j,k,33);
+            calSet3Dr(ca,Q.density[slot],i,j,k,density);
             calSet3Dr(ca,Q.pressure[slot],i,j,k,pressure);
         }
     }
 
 }
 
-VEC3r G = VEC3r(0,988.81,0);
+VEC3r G = VEC3r(9.81,0,0);
 
 void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
@@ -235,7 +236,10 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
             /**add external forces, collision, user interaction, moving rigid bodys etc.**/
             a_external = computeExternalForces(ca,i,j,k,slot);
             acc+= a_external;
-            //acc = VEC3r(0.0,1000.0,0.0);
+            calSet3Dr(ca,Q.ax[slot],i,j,k,acc[0]);
+            calSet3Dr(ca,Q.ay[slot],i,j,k,acc[1]);
+            calSet3Dr(ca,Q.az[slot],i,j,k,acc[2]);
+//            acc = VEC3r(9.81,0.0,0.0);
             //printf("Accel: %f,%f,%f\n",acc[0],acc[1],acc[2]);
             advance(ca,i,j,k,slot,acc);
         }
