@@ -7,26 +7,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-constexpr const static  double STIFFNESS  = 3.0; // Nm/kg is gas constant of water vapor
-constexpr const static  double REST_DENSITY = 998.29; //kg/m^3 is rest density of water particle
-constexpr const static  double VISCOSITY = 3.5; // Ns/m^2 or Pa*s viscosity of water
-
-constexpr const static  double  SURFACE_TENSION = 0.0728; // N/m
-constexpr const static  double  SURFACE_THRESHOLD = 7.065;
-
-constexpr const static  double GRAVITY_ACCELERATION = 9.80665;
-
-
-constexpr const static  double WALL_DAMPING =-0.9; // wall damping constant
-constexpr const static  double WALL_K = 10000.0; // wall spring constant
-
-
-
-//aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =1.5*0.003; // particle radius
-constexpr const static  double MASS =0.000026254; // particle mass
-constexpr const static  double DT =0.000009; // time simulation quantum
-
 
 
 
@@ -94,10 +74,9 @@ inline  VEC3r getNormal(struct CALModel3D * ca , const int i, const int j, const
 }
 
 
-//CAZZATA TANTO PER
 bool isNeigh(VEC3r p1, VEC3r p2) {
     double d = glm::distance(p1,p2);
-    //printf("DISTANZA %f",d);
+   // printf("npascali %f\n",d);
     if(d<=RADIUS)
         return true;
     return false;
@@ -107,41 +86,43 @@ bool isNeigh(VEC3r p1, VEC3r p2) {
 
 void calcolaDensita(struct CALModel3D* ca, int i, int j, int k) {
     for(int slot=0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
-        //CAZZATA
-        CALreal density = 2;
+        if(calGet3Di(ca,Q.imove[slot],i,j,k)!=PARTICLE_ABSENT){
+            //CAZZATA
+            CALreal density = 2;
 
+            //pos particle
+            VEC3r p1 = getPosition(ca,i,j,k,slot);
 
-        //pos particle
-        VEC3r p1 = getPosition(ca,i,j,k,slot);
+            for (int n=0; n<ca->sizeof_X; n++) {
+                for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
 
-        for (int n=0; n<ca->sizeof_X; n++) {
-            for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+                    VEC3r p2= getPositionX(ca,i,j,k,slot1,n);
+                    bool isParticle = !(p2.x <0 || p2.y<0 || p2.z<0);
+                    //v1 and v2 does not refer to the very same particle
+                    if( isParticle && !(n==0 && slot1==slot) &&  isNeigh(p1,p2)) {
+                       // stampa=false;
+                        VEC3r d = p1-p2;
 
-                VEC3r p2= getPositionX(ca,i,j,k,slot1,n);
-
-                //v1 and v2 does not refer to the very same particle
-                if(!(n==0 && slot1==slot) && isNeigh(p1,p2)) {
-                    VEC3r d = p1-p2;
-
-                    CALreal dist2 = glm::dot(d,d);
-                    density += WPoly6(dist2,RADIUS);
+                        CALreal dist2 = glm::dot(d,d);
+                        density += WPoly6(dist2,RADIUS);
+                    }
                 }
             }
+
+            density = density*MASS;
+            const CALreal pressure = STIFFNESS* ( density - REST_DENSITY );
+
+            calSet3Dr(ca,Q.density[slot],i,j,k,density);
+            calSet3Dr(ca,Q.pressure[slot],i,j,k,pressure);
         }
-        density = density*MASS;
-
-        const CALreal pressure = STIFFNESS* ( density - REST_DENSITY );
-
-        calSet3Dr(ca,Q.density[slot],i,j,k,density);
-        calSet3Dr(ca,Q.pressure[slot],i,j,k,pressure);
     }
 
 }
 
-VEC3r G = VEC3r(0,0,9.81);
+
 
 void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
-
+    VEC3r G = VEC3r(0,-GRAVITY_ACCELERATION*3,0);
     for(int slot=0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++) {
         //---------------Messo io l'if------------------
         if(ncestiFluiduNtraStuSlot(ca,i,j,k,slot)) {//solo se sono di fluido
@@ -149,8 +130,8 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
             CALreal pdensity = calGet3Dr(ca,Q.density[slot],i,j,k);
 
             //CAZZATA TANTO PER
-            CALreal ppressure = 0.2;
-                    //calGet3Dr(ca,Q.pressure[slot],i,j,k);
+            CALreal ppressure = calGet3Dr(ca,Q.pressure[slot],i,j,k);
+
 
             VEC3r f_gravity = G * pdensity;
             VEC3r f_pressure=VEC3r(0,0,0);
@@ -182,8 +163,7 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
                     VEC3r v2 = getVelocityX(ca,i,j,k,slot1,n);
                     CALreal ndensity = calGetX3Dr(ca,Q.density[slot1],i,j,k,n);
                     //CAZZATA TANTO PER
-                    CALreal npressure = 0.2;
-                            //calGetX3Dr(ca,Q.pressure[slot1],i,j,k,n);
+                    CALreal npressure = calGetX3Dr(ca,Q.pressure[slot1],i,j,k,n);
 
                     if(isNeigh(p1,p2)) {
                         cn++;
@@ -197,12 +177,18 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
                         WspikyGradient(diff, dist_2, spikyGradient, RADIUS);
 
                         if(!(n==0 && slot1==slot)){
+                            if(ndensity!=0){
                             f_pressure +=(  ppressure/pow(pdensity,2)+
                                             npressure/pow(ndensity,2)
-                                         )*spikyGradient;
+                                            )*spikyGradient;
+//                            printf("ppressure,%f--",ppressure);
+//                            printf("npressure,%f--",npressure);
+//                            printf("pdensity,%f--",pdensity);
+//                            printf("ndensity,%f\n",ndensity);
 
                             f_viscosity += ( v2 -v1)*
-                                           WviscosityLaplacian(dist_2,RADIUS) / ndensity;
+                                    WviscosityLaplacian(dist_2,RADIUS) / ndensity;
+                            }
                         }
 
                         colorFieldNormal += poly6Gradient / ndensity;
@@ -212,6 +198,8 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
                 }
             }
+
+            //printf("fpressure----+++***,%f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
 
             f_pressure *= -MASS* pdensity;
             f_viscosity *=  VISCOSITY * MASS;
@@ -236,18 +224,22 @@ void computePressureAcceleration(struct CALModel3D* ca, int i, int j, int k) {
 
             VEC3r acc = (f_pressure  +f_viscosity + f_surface + f_gravity ) / pdensity;
 
-            printf("Pressure: %f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
-            printf("Viscvosity:  %f,%f,%f\n",f_viscosity[0],f_viscosity[1],f_viscosity[2]);
-            printf("Surface:  %f,%f,%f\n",f_surface[0],f_surface[1],f_surface[2]);
-            printf("Gravity:  %f,%f,%f\n",f_gravity[0],f_gravity[1],f_gravity[2]);
-            printf("Density: %f\n",pdensity);
+//            printf("Pressure: %f,%f,%f\n",f_pressure[0],f_pressure[1],f_pressure[2]);
+//            printf("Viscosity:  %f,%f,%f\n",f_viscosity[0],f_viscosity[1],f_viscosity[2]);
+//            printf("Surface:  %f,%f,%f\n",f_surface[0],f_surface[1],f_surface[2]);
+//            printf("Gravity:  %f,%f,%f\n",f_gravity[0],f_gravity[1],f_gravity[2]);
+//            printf("Density: %f\n",pdensity);
 
 
 
             /**add external forces, collision, user interaction, moving rigid bodys etc.**/
             a_external = computeExternalForces(ca,i,j,k,slot);
             acc+= a_external;
-            //acc = VEC3r(0.0,0.0,-0.1);
+            calSet3Dr(ca,Q.ax[slot],i,j,k,acc[0]);
+            calSet3Dr(ca,Q.ay[slot],i,j,k,acc[1]);
+            calSet3Dr(ca,Q.az[slot],i,j,k,acc[2]);
+//            acc = VEC3r(9.81,0.0,0.0);
+            //printf("Accel: %f,%f,%f\n",acc[0],acc[1],acc[2]);
             advance(ca,i,j,k,slot,acc);
         }
     }
@@ -274,14 +266,18 @@ void advance(struct CALModel3D* ca , const int i, const int j, const int k , con
     v1 = getVelocity(ca,i,j,k,slot);
     VEC3r newPosition = p1 + v1*DT + acc * ipow<double>(DT,2);
     VEC3r newVelocity = (newPosition - p1) /DT;
-    printf("Vecchia: %f,%f,%f\n",p1[0],p1[1],p1[2]);
-    printf("Nuova: %f,%f,%f\n",newPosition[0],newPosition[1],newPosition[2]);
 
-//set  new position
+    //STAMPA POSIZIONI
+
+    //if(a_simulazioni->step==1){
+        //printf("Vecchia: %f,%f,%f\n",p1[0],p1[1],p1[2]);
+        //printf("Nuova: %f,%f,%f\n",newPosition[0],newPosition[1],newPosition[2]);
+    //}
+    //set  new position
     calSet3Dr(ca,Q.px[slot],i,j,k,newPosition[0]);
     calSet3Dr(ca,Q.py[slot],i,j,k,newPosition[1]);
     calSet3Dr(ca,Q.pz[slot],i,j,k,newPosition[2]);
-//set  new velocity
+    //set  new velocity
     calSet3Dr(ca,Q.vx[slot],i,j,k,newVelocity[0]);
     calSet3Dr(ca,Q.vy[slot],i,j,k,newVelocity[1]);
     calSet3Dr(ca,Q.vz[slot],i,j,k,newVelocity[2]);
@@ -291,7 +287,7 @@ void advance(struct CALModel3D* ca , const int i, const int j, const int k , con
 
 //TODO!--------------------------------------------
 bool hitWall(const VEC3r& p1,const VEC3r& p2) {
-    if(glm::distance(p1,p2)<=0.02)
+    if(glm::distance(p1,p2)<=RADIUS)
         return true;
     return false;
 }
@@ -306,6 +302,8 @@ VEC3r computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int slot)
 
     for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
         VEC3r p2 = getPosition(ca,i,j,k,slot1);
+        //sta la particella toccando un muro? se si quale? (sono sei)
+
         CALint isWall =  calGet3Di(ca,Q.imove[slot1],i,j,k);
         VEC3r n2 =  getNormal(ca,i,j,k,slot);
         if( isWall==-3 && slot!=slot1 && hitWall(p1,p2)) {

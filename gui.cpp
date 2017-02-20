@@ -38,9 +38,19 @@ void display(void)
     glRotatef(model_view.x_rot, 1, 0, 0);
     glRotatef(model_view.y_rot, 0, 1, 0);
 
+
+
     // Save the lighting state variables
     glPushAttrib(GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
+
+//    glPushMatrix();
+//        glColor3f(0,1,0);
+
+//        glScalef((ROWS)+0.5, (COLS)+1.0, (SLICES)+0.5);
+//        glutWireCube(1.0);
+//    glPopMatrix();
+
     glPushMatrix();
     glColor3f(0,1,0);
     glScalef(u_modellu->rows, u_modellu->columns, u_modellu->slices);
@@ -49,7 +59,7 @@ void display(void)
     // Restore lighting state variables
     glPopAttrib();
 
-    glRotatef(-90,1,0,0);
+    //glRotatef(-90,1,0,0);
     for (k=0; k<u_modellu->slices; k++)
         for (i=0; i<u_modellu->rows; i++)
           for (j=0; j<u_modellu->columns; j++)
@@ -218,17 +228,17 @@ void specialKeys(int key, int x, int y){
 int main(int argc, char** argv)
 {
 	partilu();
-        glutInit(&argc, argv);
-        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(1920, 1080);
-        glutInitWindowPosition(100, 100);
-        glutCreateWindow(argv[0]);
-        init();
-        glutDisplayFunc(display);
-        glutReshapeFunc(reshape);
-        glutSpecialFunc(specialKeys);
+	glutInitWindowPosition(100, 100);
+	glutCreateWindow(argv[0]);
+	init();
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glutSpecialFunc(specialKeys);
     glutMouseFunc(mouse);
-        glutMainLoop();
+	glutMainLoop();
 
 
 	return 0;
