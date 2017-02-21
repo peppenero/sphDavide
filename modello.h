@@ -13,6 +13,22 @@ extern "C" {
 #include <stdlib.h>
 #include <math.h>
 
+#include <vtkVersion.h>
+#include <vtkSmartPointer.h>
+#include <vtkTetra.h>
+#include <vtkVertex.h>
+#include <vtkCellArray.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkDataSetMapper.h>
+#include <vtkActor.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkXMLUnstructuredGridWriter.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkPointData.h>
+#include <vtkVertexGlyphFilter.h>
+
 
 #define NUMBER_OF_PARTICLES 14988
 

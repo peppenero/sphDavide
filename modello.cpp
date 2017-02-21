@@ -4,6 +4,7 @@
 #include <cstring>
 
 
+
 struct CALModel3D* u_modellu;
 struct CALRun3D* a_simulazioni;
 struct Substates Q;
@@ -11,6 +12,9 @@ struct Substates Q;
 constexpr const double II=0.205010;
 constexpr const double JJ=0.395000;
 constexpr const double KK=0.265000;
+
+ vtkSmartPointer<vtkPoints> points;
+
 
 void computeDensityElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
     for(int n=0;n<MAX_NUMBER_OF_PARTICLES_PER_CELL;n++){
@@ -120,8 +124,37 @@ void transizioniGlobali(struct CALModel3D* modello)
 
     //calApplyElementaryProcess3D(modello,stampaPosElementaryProcess);
 
+
+
     calApplyElementaryProcess3D(modello,moviliCazzu);
     calUpdate3D(modello);
+
+        vtkSmartPointer<vtkCellArray> vtk_cells = vtkSmartPointer<vtkCellArray>::New();
+
+        vtkSmartPointer<vtkVertex> vtk_vertex;
+        for(int i=0;i<4704;i++){
+            vtk_vertex = vtkSmartPointer<vtkVertex>::New();
+            vtk_vertex->GetPointIds()->SetId(0, i);
+            vtk_cells->InsertNextCell(vtk_vertex);
+        }
+
+
+        vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid =
+          vtkSmartPointer<vtkUnstructuredGrid>::New();
+        unstructuredGrid->SetPoints(points);
+        unstructuredGrid->SetCells(VTK_POLY_VERTEX, vtk_cells);
+
+        vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer =
+          vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+        writer->SetFileName("output.00001suca.vtu");
+
+    #if VTK_MAJOR_VERSION <= 5
+      writer->SetInput(unstructuredGrid);
+    #else
+      writer->SetInputData(unstructuredGrid);
+    #endif
+      writer->Write();
+
 }
 
 
@@ -249,6 +282,13 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
                         sucala(c,slot,ca,i,j,k,n);
                 }
             }
+
+
+
+    if(a_simulazioni->step==1 && calGet3Di(ca,Q.imove[0],i,j,k)==PARTICLE_PRESENT){
+        points = vtkSmartPointer<vtkPoints>::New();
+        points->InsertNextPoint(calGet3Dr(ca,Q.px[0],i,j,k), calGet3Dr(ca,Q.py[0],i,j,k), calGet3Dr(ca,Q.pz[0],i,j,k));
+    }
 }
 
 
@@ -358,51 +398,51 @@ int initParticelle(){
     }
 }
 
-int leggiFile(){
+//int leggiFile(){
 
-    FILE *posizioni;
+//    FILE *posizioni;
 
-    char line[100];
-    char *token;
-    int n=0;
-    double s[3];
+//    char line[100];
+//    char *token;
+//    int n=0;
+//    double s[3];
 
-    posizioni = fopen("posizioni.txt","r");
+//    posizioni = fopen("posizioni.txt","r");
 
-    while (fgets(line, 100, posizioni) != NULL) {
-        int campo=0;
+//    while (fgets(line, 100, posizioni) != NULL) {
+//        int campo=0;
 
-        token = strtok(line," ");
-        n++;
-        while(token != NULL){
-            switch (campo) {
-            case 0:
-                s[0]=atof(token);
-                campo++;
-                break;
-            case 1:
-                token = strtok(NULL, " ");
-                s[1]=atof(token);
-                campo++;
-                break;
-            case 2:
-                token = strtok(NULL, " ");
-                s[2]=atof(token);
-                campo++;
-                break;
-            case 3:
-                token = strtok(NULL, " ");
-                campo=0;
-                break;
-            }
-        }
+//        token = strtok(line," ");
+//        n++;
+//        while(token != NULL){
+//            switch (campo) {
+//            case 0:
+//                s[0]=atof(token);
+//                campo++;
+//                break;
+//            case 1:
+//                token = strtok(NULL, " ");
+//                s[1]=atof(token);
+//                campo++;
+//                break;
+//            case 2:
+//                token = strtok(NULL, " ");
+//                s[2]=atof(token);
+//                campo++;
+//                break;
+//            case 3:
+//                token = strtok(NULL, " ");
+//                campo=0;
+//                break;
+//            }
+//        }
 
-        danciNaPosizioni1(u_modellu, s[0],s[1],s[2],1);
+//        danciNaPosizioni1(u_modellu, s[0],s[1],s[2],1);
 
-    }
+//    }
 
-    calApplyElementaryProcess3D(u_modellu,stampaturiElementaryProcess);
-}
+//    calApplyElementaryProcess3D(u_modellu,stampaturiElementaryProcess);
+//}
 
 
 
