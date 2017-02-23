@@ -2,7 +2,7 @@
 #include "parser.h"
 #include "sph.h"
 #include <cstring>
-
+#include <stdlib.h>
 
 
 struct CALModel3D* u_modellu;
@@ -66,31 +66,31 @@ void computePressureAndAccelerationElementaryProcess(struct CALModel3D* ca, int 
 }
 
 //Funzione che lascia solo le particelle di boundary
-void sbacantaElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
-{
-    if (ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
-        for (int slot = 0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
-            pezziala(slot, ca, i, j, k);
-}
+//void sbacantaElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
+//{
+//    if (ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
+//        for (int slot = 0; slot<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
+//            pezziala(slot, ca, i, j, k);
+//}
 
 //Funzione di prova per simulare il movimento sull'asse Y.
-void moviliElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
-{
-    if (!ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
-        return;
+//void moviliElementaryProcess(struct CALModel3D* ca, int i, int j, int k)
+//{
+//    if (!ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
+//        return;
 
-    CALreal delta_z = -CL/3;
-    CALreal z;
-    CALreal z_new;
+//    CALreal delta_z = -CL/3;
+//    CALreal z;
+//    CALreal z_new;
 
-    for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
-        if (calGet3Di(ca, Q.imove[c],i,j,k) == PARTICLE_PRESENT)
-        {
-            z = calGet3Dr(ca, Q.pz[c],i,j,k);
-            z_new = z + delta_z;
-            calSet3Dr(ca, Q.pz[c],i,j,k,z_new);
-        }
-}
+//    for (int c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
+//        if (calGet3Di(ca, Q.imove[c],i,j,k) == PARTICLE_PRESENT)
+//        {
+//            z = calGet3Dr(ca, Q.pz[c],i,j,k);
+//            z_new = z + delta_z;
+//            calSet3Dr(ca, Q.pz[c],i,j,k,z_new);
+//        }
+//}
 
 
 void stampaPosElementaryProcess(struct CALModel3D* ca, int i, int j, int k){
@@ -124,7 +124,7 @@ void transizioniGlobali(struct CALModel3D* modello)
 
     //calApplyElementaryProcess3D(modello,stampaPosElementaryProcess);
 
-
+    points = vtkSmartPointer<vtkPoints>::New();
 
     calApplyElementaryProcess3D(modello,moviliCazzu);
     calUpdate3D(modello);
@@ -146,7 +146,12 @@ void transizioniGlobali(struct CALModel3D* modello)
 
         vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer =
           vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-        writer->SetFileName("output.00001suca.vtu");
+
+        char basename[11] = {"output.000"};
+        std::string s = std::to_string(a_simulazioni->step);
+        strcat(basename,s.c_str());
+        strcat(basename, ".vtu");
+        writer->SetFileName(basename);
 
     #if VTK_MAJOR_VERSION <= 5
       writer->SetInput(unstructuredGrid);
@@ -161,11 +166,13 @@ void transizioniGlobali(struct CALModel3D* modello)
 
 //Ritorna true se almeno uno tra gli slot di tutte le celle vicine contiene
 //almeno una particella di fluido.
-CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D* ca, int i, int j, int k, int n)
+CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D* ca, int i, int j, int k)
 {
-    for (int slot = 0; slot < MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
-        if (calGetX3Di(ca, Q.imove[slot],i,j,k,n) == PARTICLE_PRESENT)
-            return CAL_TRUE;
+    for(int n=1;n<u_modellu->sizeof_X;n++){
+        for (int slot = 0; slot < MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
+            if (calGetX3Di(ca, Q.imove[slot],i,j,k,n) == PARTICLE_PRESENT)
+                return CAL_TRUE;
+    }
 
     return CAL_FALSE;
 }
@@ -232,8 +239,6 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
     CALreal x,  y,  z;
     CALint _i, _j, _k;
 
-    if (ncestiArmenuNaParticellaNtraIVicini(ca, i, j, k, 0))
-    {
         //pezziali
         for (int slot = 0; slot < MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
             if (calGet3Di(ca, Q.imove[slot],i,j,k) == PARTICLE_PRESENT)
@@ -246,48 +251,65 @@ void moviliCazzu(struct CALModel3D* ca, int i, int j, int k)
                 _j = y/CL;
                 _k = z/CL;
 
-                if ((i != _i) || (j != _j) || (k != _k))
+
+
+                if ((i != _i) || (j != _j) || (k != _k)){
                     pezziala(slot, ca,i,j,k);
+                }
             }
-    }
+
 
     //sucali
     for (int n=1; n<ca->sizeof_X; n++)
-        for (int slot = 0; slot < MAX_NUMBER_OF_PARTICLES_PER_CELL; slot++)
-            if (calGetX3Di(ca,Q.imove[slot],i,j,k,n) == PARTICLE_PRESENT)
+        for (int slotDonatore = 0; slotDonatore < MAX_NUMBER_OF_PARTICLES_PER_CELL; slotDonatore++)
+            if (calGetX3Di(ca,Q.imove[slotDonatore],i,j,k,n) == PARTICLE_PRESENT)
             {
-                x = calGetX3Dr(ca, Q.px[slot],i,j,k,n);
-                y = calGetX3Dr(ca, Q.py[slot],i,j,k,n);
-                z = calGetX3Dr(ca, Q.pz[slot],i,j,k,n);
+                x = calGetX3Dr(ca, Q.px[slotDonatore],i,j,k,n);
+                y = calGetX3Dr(ca, Q.py[slotDonatore],i,j,k,n);
+                z = calGetX3Dr(ca, Q.pz[slotDonatore],i,j,k,n);
                 //PERICOLO----XXXXXXXXXX
                 _i = x/CL;
                 _j = y/CL;
                 _k = z/CL;
 
-                int a;
-                if (i==25 && j==25 && k==24 && n==18 && slot==0)
-                    a = 0;
+//                int a;
+//                if (i==25 && j==25 && k==24 && n==18 && slot==0)
+//                    a = 0;
 
                 if ((i == _i) && (j == _j) && (k == _k))
                 {
-                    int c;
-                    for (c = 0; c < MAX_NUMBER_OF_PARTICLES_PER_CELL; c++)
-                        if (calGetNext3Di(ca,Q.imove[c],i,j,k) == PARTICLE_ABSENT)
+                    int slotRicevente;
+                    for (slotRicevente = 0; slotRicevente < MAX_NUMBER_OF_PARTICLES_PER_CELL; slotRicevente++)
+                        if (calGetNext3Di(ca,Q.imove[slotRicevente],i,j,k) == PARTICLE_ABSENT)
                         {
-                            slot = c;
+
+                            sucala(slotRicevente,slotDonatore,ca,i,j,k,n);
                             break;
                         }
 
-                    if (c < MAX_NUMBER_OF_PARTICLES_PER_CELL)
-                        sucala(c,slot,ca,i,j,k,n);
                 }
+
+//                if ((i == _i) && (j == _j) && (k == _k))
+//                {
+//                    int slotRicevente;
+//                    for (slotRicevente = 0; slotRicevente < MAX_NUMBER_OF_PARTICLES_PER_CELL; slotRicevente++)
+//                        if (calGetNext3Di(ca,Q.imove[slotRicevente],i,j,k) == PARTICLE_ABSENT)
+//                        {
+
+//                            slotDonatore = slotRicevente;
+//                            break;
+//                        }
+
+//                    if (slotRicevente < MAX_NUMBER_OF_PARTICLES_PER_CELL)
+//                        sucala(slotRicevente,slotDonatore,ca,i,j,k,n);
+//                }
             }
 
 
-
-    if(a_simulazioni->step==1 && calGet3Di(ca,Q.imove[0],i,j,k)==PARTICLE_PRESENT){
-        points = vtkSmartPointer<vtkPoints>::New();
-        points->InsertNextPoint(calGet3Dr(ca,Q.px[0],i,j,k), calGet3Dr(ca,Q.py[0],i,j,k), calGet3Dr(ca,Q.pz[0],i,j,k));
+    for(int slot=0;slot<MAX_NUMBER_OF_PARTICLES_PER_CELL;slot++){
+        if(calGet3Di(ca,Q.imove[slot],i,j,k)==PARTICLE_PRESENT){
+            points->InsertNextPoint(calGet3Dr(ca,Q.px[slot],i,j,k), calGet3Dr(ca,Q.py[slot],i,j,k), calGet3Dr(ca,Q.pz[slot],i,j,k));
+        }
     }
 }
 

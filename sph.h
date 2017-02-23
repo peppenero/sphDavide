@@ -28,15 +28,20 @@ constexpr const static  double WALL_K = 10000.0; // wall spring constant
 
 
 //aggiusta i valori di questi sotto
-constexpr const static  double RADIUS =0.016; // particle radius
+constexpr const static  double RADIUS =0.0016; // particle radius
 constexpr const static  double MASS =0.0008; // particle mass
-constexpr const static  double DT =0.001; // time simulation quantum
+constexpr const static  double DT =0.0001; // time simulation quantum
+
+
 
 
 static bool stampa=true;
 
 typedef glm::tvec3<int> VEC3i;
 typedef glm::tvec3<double> VEC3r;
+
+//MURI front back left right bottom top
+constexpr const static VEC3r normals[6]= { VEC3r(0,0,-1), VEC3r(0,0,1), VEC3r(1,0,0), VEC3r(-1,0,0), VEC3r(0,1,0), VEC3r(0,-1,0)};
 
 
 CALreal WPoly6(const CALreal r2, const CALreal h);

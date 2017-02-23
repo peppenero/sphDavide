@@ -286,10 +286,56 @@ void advance(struct CALModel3D* ca , const int i, const int j, const int k , con
 }
 
 //TODO!--------------------------------------------
-bool hitWall(const VEC3r& p1,const VEC3r& p2) {
-    if(glm::distance(p1,p2)<=RADIUS)
-        return true;
-    return false;
+bool hitWall(int i, int j, int k, int w) {
+
+    switch (w) {
+    case 0:
+    {
+        if(k==0)
+            return true;
+        else
+            return false;
+    }
+    case 1:
+    {
+        if(k==SLICES)
+            return true;
+        else
+            return false;
+    }
+    case 2:
+    {
+        if(i==0)
+            return true;
+        else
+            return false;
+    }
+    case 3:
+    {
+        if(i==ROWS)
+            return true;
+        else
+            return false;
+    }
+    case 4:
+    {
+        if(j==0)
+            return true;
+        else
+            return false;
+    }
+    case 5:
+    {
+        if(j==COLS)
+            return true;
+        else
+            return false;
+    }
+    default:
+        return false;
+    }
+
+
 }
 
 
@@ -300,21 +346,18 @@ VEC3r computeExternalForces(struct CALModel3D* ca, int i, int j, int k,int slot)
 
     VEC3r v1 = getVelocity(ca,i,j,k,slot);
 
-    for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
-        VEC3r p2 = getPosition(ca,i,j,k,slot1);
+//    for(int slot1=0; slot1<MAX_NUMBER_OF_PARTICLES_PER_CELL; slot1++) {
+//        VEC3r p2 = getPosition(ca,i,j,k,slot1);
         //sta la particella toccando un muro? se si quale? (sono sei)
 
-        CALint isWall =  calGet3Di(ca,Q.imove[slot1],i,j,k);
-        VEC3r n2 =  getNormal(ca,i,j,k,slot);
-        if( isWall==-3 && slot!=slot1 && hitWall(p1,p2)) {
-            double d = glm::dot((p2 - p1),n2) + RADIUS;
-            if(d > 0) {
-                _a_extern +=  WALL_K * n2 * d;
-                _a_extern +=  WALL_DAMPING * glm::dot(v1,n2) * n2;
-            }
+//        CALint isWall =  calGet3Di(ca,Q.imove[slot1],i,j,k);
+//        VEC3r n2 =  getNormal(ca,i,j,k,slot);
+    for(int w =0;w<6;w++){
+        if(hitWall(i,j,k,w)){
+                _a_extern +=  WALL_K * normals[w];
+                _a_extern +=  WALL_DAMPING * glm::dot(v1,normals[w]) * normals[w];
+             }
         }
-
-    }
     return _a_extern;
 }
 

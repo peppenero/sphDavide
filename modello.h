@@ -41,7 +41,7 @@ extern "C" {
 //Cell side for divisions
 #define CLD 1000
 
-#define MAX_NUMBER_OF_PARTICLES_PER_CELL 4
+#define MAX_NUMBER_OF_PARTICLES_PER_CELL 5
 #define NODATA -10 // No particle condition (used in px, py and pz)
 #define PARTICLE_EDGE   -3
 #define PARTICLE_ABSENT  0
@@ -100,14 +100,14 @@ extern struct Substates Q;
 extern struct CALRun3D* a_simulazioni;
 
 // Computational steps
-#define STEPS 100
+#define STEPS 10000
 #define VERBOSE
 
 // Functions
 void pezziala(int , struct CALModel3D* , int , int , int );
 void moviliCazzu(struct CALModel3D* , int , int , int );
 CALbyte ncestiFluiduNtraStuSlot(struct CALModel3D*, int, int, int,int);
-CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D*, int, int, int, int);
+CALbyte ncestiArmenuNaParticellaNtraIVicini(struct CALModel3D*, int, int, int);
 void transition(struct CALModel3D*,int,int,int);
 void startModello();
 void initFunction();
